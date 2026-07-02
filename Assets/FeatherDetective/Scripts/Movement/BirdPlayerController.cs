@@ -122,6 +122,11 @@ namespace FeatherDetective
 
         private void OnTriggerExit(Collider other)
         {
+            if (other.TryGetComponent(out PerchNode perch) && ReferenceEquals(perch, currentPerch))
+            {
+                currentPerch = null;
+            }
+
             if (TryGetInspectable(other, out var inspectable) && ReferenceEquals(inspectable, focusedInspectable))
             {
                 focusedInspectable = null;
