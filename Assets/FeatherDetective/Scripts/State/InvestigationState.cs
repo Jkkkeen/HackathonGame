@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 
 namespace FeatherDetective
 {
@@ -6,9 +7,15 @@ namespace FeatherDetective
     {
         private readonly HashSet<string> collectedIds = new HashSet<string>();
         private readonly Dictionary<DeductionSlotId, string> placements = new Dictionary<DeductionSlotId, string>();
+        private readonly ReadOnlyDictionary<DeductionSlotId, string> readOnlyPlacements;
+
+        public InvestigationState()
+        {
+            readOnlyPlacements = new ReadOnlyDictionary<DeductionSlotId, string>(placements);
+        }
 
         public int CollectedCount => collectedIds.Count;
-        public IReadOnlyDictionary<DeductionSlotId, string> Placements => placements;
+        public IReadOnlyDictionary<DeductionSlotId, string> Placements => readOnlyPlacements;
 
         public bool Collect(FeatherDefinition feather)
         {

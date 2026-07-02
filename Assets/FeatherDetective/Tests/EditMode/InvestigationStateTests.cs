@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using NUnit.Framework;
 using UnityEngine;
 
@@ -30,6 +31,19 @@ namespace FeatherDetective.Tests
             Assert.That(state.TryPlace(feather, DeductionSlotId.LastFeedingDay), Is.False);
             Assert.That(state.TryPlace(feather, DeductionSlotId.WhereHeWent), Is.True);
             Assert.That(state.GetPlacedFeatherId(DeductionSlotId.WhereHeWent), Is.EqualTo("pigeon-route"));
+        }
+
+        [Test]
+        public void PlacementsDoesNotExposeMutableDictionary()
+        {
+            var state = new InvestigationState();
+            var feather = CreateFeather("crow-bench", BirdSpecies.Crow, DeductionSlotId.LastFeedingDay);
+
+            state.Collect(feather);
+            state.TryPlace(feather, DeductionSlotId.LastFeedingDay);
+
+            Assert.That(state.Placements, Is.Not.TypeOf<Dictionary<DeductionSlotId, string>>());
+            Assert.That(state.GetPlacedFeatherId(DeductionSlotId.LastFeedingDay), Is.EqualTo("crow-bench"));
         }
 
         [Test]
