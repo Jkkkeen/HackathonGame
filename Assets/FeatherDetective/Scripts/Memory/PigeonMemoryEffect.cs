@@ -5,6 +5,8 @@ namespace FeatherDetective
 {
     public sealed class PigeonMemoryEffect : MonoBehaviour, IMemoryEffect
     {
+        [SerializeField] private float duration = 1f;
+
         public BirdSpecies Species => BirdSpecies.Pigeon;
 
         public IEnumerator Play(FeatherDefinition feather, MemoryContext context)
@@ -19,7 +21,7 @@ namespace FeatherDetective
                 context.AudioSource.PlayOneShot(ProceduralAudio.CreateTone("Pigeon Memory", 330f, 0.3f, 0.07f));
             }
 
-            yield return context.RouteRenderer.AnimateRoute(feather.RoutePoints);
+            yield return context.RouteRenderer.AnimateRoute(feather.RoutePoints, duration);
         }
     }
 }

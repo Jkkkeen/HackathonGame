@@ -22,14 +22,34 @@ namespace FeatherDetective
 
             if (context.AudioSource != null)
             {
-                context.AudioSource.spatialBlend = 1f;
-                context.AudioSource.panStereo = 0f;
-                context.AudioSource.rolloffMode = AudioRolloffMode.Linear;
-                context.AudioSource.PlayOneShot(ProceduralAudio.CreateTone("Crow Memory", 220f, 0.25f, 0.12f));
+                yield return PlaySpatialCrowAudio(context.AudioSource);
             }
 
             yield return new WaitForSeconds(holdDuration);
             yield return FadeOverlay(context.DarkOverlay, context.DarkOverlay.alpha, previousAlpha, darkenDuration);
+        }
+
+        private static IEnumerator PlaySpatialCrowAudio(AudioSource audioSource)
+        {
+            var previousSpatialBlend = audioSource.spatialBlend;
+            var previousPanStereo = audioSource.panStereo;
+            var previousRolloffMode = audioSource.rolloffMode;
+            var previousClip = audioSource.clip;
+            var previousLoop = audioSource.loop;
+
+            var clip = ProceduralAudio.CreateTone("Crow Memory", 220f, 0.25f, 0.12f);
+            audioSource.spatialBlend = 1f;
+            audioSource.panStereo = 0f;
+            audioSource.rolloffMode = AudioRolloffMode.Linear;
+            audioSource.PlayOneShot(clip);
+
+            yield return new WaitForSeconds(clip.length);
+
+            audioSource.spatialBlend = previousSpatialBlend;
+            audioSource.panStereo = previousPanStereo;
+            audioSource.rolloffMode = previousRolloffMode;
+            audioSource.clip = previousClip;
+            audioSource.loop = previousLoop;
         }
 
         private static IEnumerator FadeOverlay(CanvasGroup overlay, float from, float to, float duration)

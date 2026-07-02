@@ -14,9 +14,14 @@ namespace FeatherDetective
             {
                 lineRenderer = GetComponent<LineRenderer>();
             }
+
+            if (lineRenderer != null)
+            {
+                lineRenderer.enabled = false;
+            }
         }
 
-        public IEnumerator AnimateRoute(Vector3[] points)
+        public IEnumerator AnimateRoute(Vector3[] points, float duration)
         {
             if (lineRenderer == null || points == null || points.Length < 2)
             {
@@ -33,7 +38,6 @@ namespace FeatherDetective
             lineRenderer.endWidth = 0f;
 
             var elapsed = 0f;
-            var duration = secondsPerSegment * (points.Length - 1);
             while (elapsed < duration)
             {
                 elapsed += Time.deltaTime;

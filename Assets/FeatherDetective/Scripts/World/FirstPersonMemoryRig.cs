@@ -38,15 +38,18 @@ namespace FeatherDetective
                 memoryCamera.enabled = true;
             }
 
-            if (breathSource != null && !breathSource.isPlaying)
-            {
-                breathSource.Play();
-            }
-
             var elapsed = 0f;
+            var nextPulseTime = 0f;
+            var pulseInterval = bobFrequency > 0f ? 1f / bobFrequency : duration;
             while (elapsed < duration)
             {
                 elapsed += Time.deltaTime;
+                if (breathSource != null && elapsed >= nextPulseTime)
+                {
+                    breathSource.Play();
+                    nextPulseTime += pulseInterval;
+                }
+
                 var offset = Mathf.Sin(elapsed * Mathf.PI * 2f * bobFrequency) * bobHeight;
                 transform.localPosition = originalLocalPosition + Vector3.up * offset;
                 yield return null;

@@ -27,7 +27,7 @@ namespace FeatherDetective
         {
             if (activeRoutine != null)
             {
-                StopCoroutine(activeRoutine);
+                return;
             }
 
             activeRoutine = StartCoroutine(PlayRoutine(feather));
@@ -57,7 +57,7 @@ namespace FeatherDetective
             activeRoutine = null;
         }
 
-        public static IMemoryEffect SelectEffectForTests(IReadOnlyList<IMemoryEffect> availableEffects, BirdSpecies species)
+        public static IMemoryEffect SelectEffectForTests(IEnumerable<IMemoryEffect> availableEffects, BirdSpecies species)
         {
             return SelectEffect(availableEffects, species);
         }
@@ -76,16 +76,15 @@ namespace FeatherDetective
             }
         }
 
-        private static IMemoryEffect SelectEffect(IReadOnlyList<IMemoryEffect> availableEffects, BirdSpecies species)
+        private static IMemoryEffect SelectEffect(IEnumerable<IMemoryEffect> availableEffects, BirdSpecies species)
         {
             if (availableEffects == null)
             {
                 return null;
             }
 
-            for (var i = 0; i < availableEffects.Count; i++)
+            foreach (var effect in availableEffects)
             {
-                var effect = availableEffects[i];
                 if (effect != null && effect.Species == species)
                 {
                     return effect;
