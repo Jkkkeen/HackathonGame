@@ -8,13 +8,21 @@ namespace FeatherDetective
 
         private Renderer cachedRenderer;
         private Color originalColor;
+        private bool hasOriginalColor;
+        private bool hasExplicitMemoryColor;
 
         public Color MemoryColor => memoryColor;
 
         private void Awake()
         {
-            cachedRenderer = GetComponent<Renderer>();
-            originalColor = cachedRenderer != null ? cachedRenderer.material.color : Color.white;
+            CaptureRendererState();
+        }
+
+        public void ConfigureForBuilder(Color newMemoryColor)
+        {
+            memoryColor = newMemoryColor;
+            hasExplicitMemoryColor = true;
+            CaptureRendererState(true);
         }
 
         public void ApplyMagpieState(Color[] importantColors)
@@ -44,6 +52,8 @@ namespace FeatherDetective
 
         private bool IsImportantColor(Color[] importantColors)
         {
+            CaptureRendererState();
+
             if (importantColors == null)
             {
                 return false;
@@ -59,6 +69,36 @@ namespace FeatherDetective
             }
 
             return false;
+        }
+
+        private void CaptureRendererState(bool forceOriginalColor = false)
+        {
+            if (cachedRenderer == null)
+            {
+                cachedRenderer = GetComponent<Renderer>();
+            }
+
+            if (cachedRenderer == null)
+            {
+                if (!hasOriginalColor)
+                {
+                    originalColor = Color.white;
+                    hasOriginalColor = true;
+                }
+
+                return;
+            }
+
+            if (!hasOriginalColor || forceOriginalColor)
+            {
+                originalColor = cachedRenderer.material.color;
+                hasOriginalColor = true;
+            }
+
+            if (!hasExplicitMemoryColor)
+            {
+                memoryColor = originalColor;
+            }
         }
     }
 }

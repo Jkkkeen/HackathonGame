@@ -23,6 +23,17 @@ namespace FeatherDetective
             RefreshEffects();
         }
 
+        private void OnDisable()
+        {
+            StopPlayback();
+        }
+
+        public void ConfigureForBuilder(MemoryContext newContext)
+        {
+            context = newContext;
+            RefreshEffects();
+        }
+
         public void PlayMemory(FeatherDefinition feather)
         {
             if (feather == null || activeRoutine != null)
@@ -35,26 +46,49 @@ namespace FeatherDetective
 
         public IEnumerator PlayRoutine(FeatherDefinition feather)
         {
-            if (feather == null)
+            try
             {
+                if (feather == null)
+                {
+                    yield break;
+                }
+
+                if (effects.Count == 0)
+                {
+                    RefreshEffects();
+                }
+
+                var effect = SelectEffect(effects, feather.Species);
+                if (effect == null)
+                {
+                    yield break;
+                }
+
+                yield return effect.Play(feather, context);
+            }
+            finally
+            {
+                if (context != null)
+                {
+                    context.RestoreAfterMemory();
+                }
+
                 activeRoutine = null;
-                yield break;
             }
+        }
 
-            if (effects.Count == 0)
+        public void StopPlayback()
+        {
+            if (activeRoutine != null)
             {
-                RefreshEffects();
-            }
-
-            var effect = SelectEffect(effects, feather.Species);
-            if (effect == null)
-            {
+                StopCoroutine(activeRoutine);
                 activeRoutine = null;
-                yield break;
             }
 
-            yield return effect.Play(feather, context);
-            activeRoutine = null;
+            if (context != null)
+            {
+                context.RestoreAfterMemory();
+            }
         }
 
         public static IMemoryEffect SelectEffectForTests(IEnumerable<IMemoryEffect> availableEffects, BirdSpecies species)

@@ -41,6 +41,11 @@ namespace FeatherDetective
             yield return ShiftAtmosphere(originalWindVolume, originalInsectVolume, originalFlockScale, duration);
         }
 
+        public void Restore()
+        {
+            SetAtmosphere(originalWindVolume, originalInsectVolume, originalFlockScale);
+        }
+
         private IEnumerator ShiftAtmosphere(float windVolume, float insectVolume, Vector3 flockScale, float duration)
         {
             var startWind = windSource != null ? windSource.volume : 0f;

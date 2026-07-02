@@ -41,11 +41,89 @@ namespace FeatherDetective.Tests
         }
 
         [Test]
-        public void RouteLineRendererAcceptsDurationWhenAnimatingRoute()
+        public void ConfigureForBuilderAssignsContext()
+        {
+            var gameObject = new GameObject("Memory Playback Builder Test");
+            var contextObject = new GameObject("Memory Context");
+            try
+            {
+                var controller = gameObject.AddComponent<MemoryPlaybackController>();
+                var context = contextObject.AddComponent<MemoryContext>();
+
+                controller.ConfigureForBuilder(context);
+
+                Assert.That(controller.Context, Is.EqualTo(context));
+            }
+            finally
+            {
+                Object.DestroyImmediate(gameObject);
+                Object.DestroyImmediate(contextObject);
+            }
+        }
+
+        [Test]
+        public void ColorMemoryTargetPreservesConfiguredImportantColorAndRestoresOriginal()
+        {
+            var gameObject = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            try
+            {
+                var renderer = gameObject.GetComponent<Renderer>();
+                renderer.material = new Material(Shader.Find("Standard"));
+                renderer.material.color = new Color(0.1f, 0.8f, 0.2f, 0.5f);
+
+                var target = gameObject.AddComponent<ColorMemoryTarget>();
+                target.ConfigureForBuilder(Color.green);
+
+                target.ApplyMagpieState(new[] { Color.green });
+
+                Assert.That(renderer.material.color, Is.EqualTo(new Color(0.1f, 0.8f, 0.2f, 0.5f)));
+
+                renderer.material.color = Color.black;
+                target.Restore();
+
+                Assert.That(renderer.material.color, Is.EqualTo(new Color(0.1f, 0.8f, 0.2f, 0.5f)));
+            }
+            finally
+            {
+                Object.DestroyImmediate(gameObject);
+            }
+        }
+
+        [Test]
+        public void ColorMemoryTargetGrayscalesNonImportantConfiguredColor()
+        {
+            var gameObject = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            try
+            {
+                var renderer = gameObject.GetComponent<Renderer>();
+                renderer.material = new Material(Shader.Find("Standard"));
+                renderer.material.color = new Color(0.2f, 0.4f, 0.8f, 0.25f);
+
+                var target = gameObject.AddComponent<ColorMemoryTarget>();
+                target.ConfigureForBuilder(Color.blue);
+
+                target.ApplyMagpieState(new[] { Color.red });
+
+                var color = renderer.material.color;
+                Assert.That(color.r, Is.EqualTo(color.g).Within(0.001f));
+                Assert.That(color.g, Is.EqualTo(color.b).Within(0.001f));
+                Assert.That(color.a, Is.EqualTo(0.25f).Within(0.001f));
+            }
+            finally
+            {
+                Object.DestroyImmediate(gameObject);
+            }
+        }
+
+        [UnityTest]
+        public IEnumerator RouteLineRendererEnablesDuringAnimationAndHidesAfterPlayback()
         {
             var gameObject = new GameObject("Route Line Renderer Test");
             try
             {
+                var lineRenderer = gameObject.AddComponent<LineRenderer>();
+                lineRenderer.startWidth = 0.4f;
+                lineRenderer.endWidth = 0.2f;
                 var routeRenderer = gameObject.AddComponent<RouteLineRenderer>();
                 var route = new[]
                 {
@@ -53,9 +131,19 @@ namespace FeatherDetective.Tests
                     Vector3.one
                 };
 
-                var animation = routeRenderer.AnimateRoute(route, 0.5f);
+                yield return null;
 
-                Assert.That(animation, Is.Not.Null);
+                var animation = routeRenderer.AnimateRoute(route, 0f);
+                Assert.That(animation.MoveNext(), Is.True);
+                Assert.That(lineRenderer.enabled, Is.True);
+                Assert.That(lineRenderer.positionCount, Is.EqualTo(2));
+
+                while (animation.MoveNext())
+                {
+                    yield return animation.Current;
+                }
+
+                Assert.That(lineRenderer.enabled, Is.False);
             }
             finally
             {
@@ -126,6 +214,110 @@ namespace FeatherDetective.Tests
             finally
             {
                 Object.DestroyImmediate(gameObject);
+            }
+        }
+
+        [Test]
+        public void RestoreAfterMemoryRestoresPresentationState()
+        {
+            var contextObject = new GameObject("Memory Context Restore Test");
+            var colorObject = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            var routeObject = new GameObject("Route Renderer");
+            var rigObject = new GameObject("First Person Rig");
+            try
+            {
+                var overlay = contextObject.AddComponent<CanvasGroup>();
+                overlay.alpha = 0.2f;
+
+                var audioSource = contextObject.AddComponent<AudioSource>();
+                audioSource.spatialBlend = 0.3f;
+                audioSource.panStereo = -0.4f;
+                audioSource.loop = true;
+
+                var renderer = colorObject.GetComponent<Renderer>();
+                renderer.material = new Material(Shader.Find("Standard"));
+                renderer.material.color = Color.yellow;
+                var colorTarget = colorObject.AddComponent<ColorMemoryTarget>();
+                colorTarget.ConfigureForBuilder(Color.yellow);
+
+                var lineRenderer = routeObject.AddComponent<LineRenderer>();
+                var routeRenderer = routeObject.AddComponent<RouteLineRenderer>();
+
+                rigObject.transform.localPosition = new Vector3(1f, 2f, 3f);
+                var rig = rigObject.AddComponent<FirstPersonMemoryRig>();
+                rig.ConfigureForBuilder(null, null);
+
+                var context = contextObject.AddComponent<MemoryContext>();
+                context.ConfigureForBuilder(overlay, audioSource, new[] { colorTarget }, routeRenderer, rig, null);
+
+                overlay.alpha = 0.9f;
+                audioSource.spatialBlend = 1f;
+                audioSource.panStereo = 0.8f;
+                audioSource.loop = false;
+                renderer.material.color = Color.black;
+                lineRenderer.enabled = true;
+                lineRenderer.positionCount = 2;
+                rigObject.transform.localPosition = Vector3.zero;
+
+                context.RestoreAfterMemory();
+
+                Assert.That(overlay.alpha, Is.EqualTo(0.2f).Within(0.001f));
+                Assert.That(audioSource.spatialBlend, Is.EqualTo(0.3f).Within(0.001f));
+                Assert.That(audioSource.panStereo, Is.EqualTo(-0.4f).Within(0.001f));
+                Assert.That(audioSource.loop, Is.True);
+                Assert.That(renderer.material.color, Is.EqualTo(Color.yellow));
+                Assert.That(lineRenderer.enabled, Is.False);
+                Assert.That(lineRenderer.positionCount, Is.EqualTo(0));
+                Assert.That(rigObject.transform.localPosition, Is.EqualTo(new Vector3(1f, 2f, 3f)));
+            }
+            finally
+            {
+                Object.DestroyImmediate(contextObject);
+                Object.DestroyImmediate(colorObject);
+                Object.DestroyImmediate(routeObject);
+                Object.DestroyImmediate(rigObject);
+            }
+        }
+
+        [UnityTest]
+        public IEnumerator StopPlaybackRestoresContextAndAllowsNextPlayback()
+        {
+            var gameObject = new GameObject("Memory Playback Stop Test");
+            var contextObject = new GameObject("Memory Context Stop Test");
+            try
+            {
+                var overlay = contextObject.AddComponent<CanvasGroup>();
+                overlay.alpha = 0.15f;
+                var context = contextObject.AddComponent<MemoryContext>();
+                context.ConfigureForBuilder(overlay, null, new ColorMemoryTarget[0], null, null, null);
+
+                var controller = gameObject.AddComponent<MemoryPlaybackController>();
+                var crowEffect = gameObject.AddComponent<BlockingMemoryEffect>();
+                crowEffect.Configure(BirdSpecies.Crow);
+                controller.ConfigureForBuilder(context);
+
+                yield return null;
+
+                controller.PlayMemory(CreateFeather(BirdSpecies.Crow));
+                yield return null;
+
+                overlay.alpha = 0.8f;
+                controller.StopPlayback();
+
+                Assert.That(overlay.alpha, Is.EqualTo(0.15f).Within(0.001f));
+
+                controller.PlayMemory(CreateFeather(BirdSpecies.Crow));
+                yield return null;
+
+                Assert.That(crowEffect.PlayCount, Is.EqualTo(2));
+
+                crowEffect.Release();
+                yield return null;
+            }
+            finally
+            {
+                Object.DestroyImmediate(gameObject);
+                Object.DestroyImmediate(contextObject);
             }
         }
 
