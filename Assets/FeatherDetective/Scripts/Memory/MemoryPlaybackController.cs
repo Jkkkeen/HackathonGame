@@ -25,7 +25,7 @@ namespace FeatherDetective
 
         public void PlayMemory(FeatherDefinition feather)
         {
-            if (activeRoutine != null)
+            if (feather == null || activeRoutine != null)
             {
                 return;
             }

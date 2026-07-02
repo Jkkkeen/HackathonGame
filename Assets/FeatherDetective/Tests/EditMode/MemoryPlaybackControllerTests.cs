@@ -98,6 +98,37 @@ namespace FeatherDetective.Tests
             }
         }
 
+        [UnityTest]
+        public IEnumerator PlayMemoryIgnoresNullRequestWithoutBlockingNextPlayback()
+        {
+            var gameObject = new GameObject("Memory Playback Null Test");
+            try
+            {
+                var controller = gameObject.AddComponent<MemoryPlaybackController>();
+                var crowEffect = gameObject.AddComponent<BlockingMemoryEffect>();
+                crowEffect.Configure(BirdSpecies.Crow);
+
+                var crowFeather = CreateFeather(BirdSpecies.Crow);
+
+                yield return null;
+
+                controller.PlayMemory(null);
+                yield return null;
+                controller.PlayMemory(crowFeather);
+                yield return null;
+
+                Assert.That(crowEffect.PlayCount, Is.EqualTo(1));
+                Assert.That(crowEffect.IsPlaying, Is.True);
+
+                crowEffect.Release();
+                yield return null;
+            }
+            finally
+            {
+                Object.DestroyImmediate(gameObject);
+            }
+        }
+
         private static IEnumerable<IMemoryEffect> YieldEffects(params IMemoryEffect[] effects)
         {
             for (var i = 0; i < effects.Length; i++)
