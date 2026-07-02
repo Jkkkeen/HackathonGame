@@ -17,16 +17,12 @@ namespace FeatherDetective
             }
 
             var targets = context.ColorTargets;
-            var colors = feather.HighlightColors;
 
-            if (targets != null && colors != null && colors.Length > 0)
+            if (targets != null)
             {
                 for (var i = 0; i < targets.Length; i++)
                 {
-                    if (targets[i] != null)
-                    {
-                        targets[i].ApplyMagpieState(colors[i % colors.Length]);
-                    }
+                    targets[i]?.ApplyMagpieState(feather.HighlightColors);
                 }
             }
 

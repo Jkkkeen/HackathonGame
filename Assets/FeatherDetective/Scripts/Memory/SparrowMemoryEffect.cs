@@ -23,7 +23,7 @@ namespace FeatherDetective
 
             if (context.AtmosphereController != null)
             {
-                yield return context.AtmosphereController.ShiftForSparrow();
+                yield return context.AtmosphereController.ShiftSparrowAtmosphere(holdDuration);
             }
             else
             {

@@ -7,68 +7,62 @@ namespace FeatherDetective
     {
         [SerializeField] private AudioSource windSource;
         [SerializeField] private AudioSource insectSource;
-        [SerializeField] private AudioSource flockSource;
-        [SerializeField] private float shiftDuration = 2f;
+        [SerializeField] private Transform flockRoot;
 
         private float originalWindVolume;
         private float originalInsectVolume;
-        private float originalFlockVolume;
-        private bool configured;
+        private Vector3 originalFlockScale;
 
         private void Awake()
         {
-            Configure();
+            CaptureOriginalState();
+            ConfigureSources();
         }
 
-        public void Configure()
+        public void ConfigureForBuilder(AudioSource newWindSource, AudioSource newInsectSource, Transform newFlockRoot)
         {
-            if (configured)
-            {
-                return;
-            }
+            windSource = newWindSource;
+            insectSource = newInsectSource;
+            flockRoot = newFlockRoot;
 
-            originalWindVolume = windSource != null ? windSource.volume : 0f;
-            originalInsectVolume = insectSource != null ? insectSource.volume : 0f;
-            originalFlockVolume = flockSource != null ? flockSource.volume : 0f;
-
-            ConfigureSource(windSource, ProceduralAudio.CreateSoftNoise("Memory Wind", 1f, 0.08f), true);
-            ConfigureSource(insectSource, ProceduralAudio.CreateTone("Memory Insects", 880f, 0.5f, 0.02f), true);
-            ConfigureSource(flockSource, ProceduralAudio.CreateTone("Memory Flock", 440f, 0.8f, 0.03f), true);
-
-            configured = true;
+            CaptureOriginalState();
+            ConfigureSources();
         }
 
-        public IEnumerator ShiftForSparrow()
+        public IEnumerator ShiftSparrowAtmosphere(float duration)
         {
-            Configure();
+            CaptureOriginalState();
 
-            yield return FadeAtmosphere(originalWindVolume * 0.3f, originalInsectVolume * 1.6f, originalFlockVolume * 0.2f, shiftDuration);
-            yield return new WaitForSeconds(0.5f);
-            yield return FadeAtmosphere(originalWindVolume, originalInsectVolume, originalFlockVolume, shiftDuration);
+            var targetWindVolume = originalWindVolume * 0.3f;
+            var targetInsectVolume = originalInsectVolume * 1.6f;
+            var targetFlockScale = originalFlockScale * 1.35f;
+
+            yield return ShiftAtmosphere(targetWindVolume, targetInsectVolume, targetFlockScale, duration);
+            yield return ShiftAtmosphere(originalWindVolume, originalInsectVolume, originalFlockScale, duration);
         }
 
-        private IEnumerator FadeAtmosphere(float windVolume, float insectVolume, float flockVolume, float duration)
+        private IEnumerator ShiftAtmosphere(float windVolume, float insectVolume, Vector3 flockScale, float duration)
         {
             var startWind = windSource != null ? windSource.volume : 0f;
             var startInsect = insectSource != null ? insectSource.volume : 0f;
-            var startFlock = flockSource != null ? flockSource.volume : 0f;
+            var startFlockScale = flockRoot != null ? flockRoot.localScale : Vector3.one;
 
             var elapsed = 0f;
             while (elapsed < duration)
             {
                 elapsed += Time.deltaTime;
                 var t = duration <= 0f ? 1f : Mathf.Clamp01(elapsed / duration);
-                SetVolumes(
+                SetAtmosphere(
                     Mathf.Lerp(startWind, windVolume, t),
                     Mathf.Lerp(startInsect, insectVolume, t),
-                    Mathf.Lerp(startFlock, flockVolume, t));
+                    Vector3.Lerp(startFlockScale, flockScale, t));
                 yield return null;
             }
 
-            SetVolumes(windVolume, insectVolume, flockVolume);
+            SetAtmosphere(windVolume, insectVolume, flockScale);
         }
 
-        private void SetVolumes(float windVolume, float insectVolume, float flockVolume)
+        private void SetAtmosphere(float windVolume, float insectVolume, Vector3 flockScale)
         {
             if (windSource != null)
             {
@@ -80,10 +74,23 @@ namespace FeatherDetective
                 insectSource.volume = insectVolume;
             }
 
-            if (flockSource != null)
+            if (flockRoot != null)
             {
-                flockSource.volume = flockVolume;
+                flockRoot.localScale = flockScale;
             }
+        }
+
+        private void CaptureOriginalState()
+        {
+            originalWindVolume = windSource != null ? windSource.volume : 0f;
+            originalInsectVolume = insectSource != null ? insectSource.volume : 0f;
+            originalFlockScale = flockRoot != null ? flockRoot.localScale : Vector3.one;
+        }
+
+        private void ConfigureSources()
+        {
+            ConfigureSource(windSource, ProceduralAudio.CreateSoftNoise("Memory Wind", 1f, 0.08f), true);
+            ConfigureSource(insectSource, ProceduralAudio.CreateTone("Memory Insects", 880f, 0.5f, 0.02f), true);
         }
 
         private static void ConfigureSource(AudioSource source, AudioClip clip, bool loop)
@@ -99,6 +106,10 @@ namespace FeatherDetective
             }
 
             source.loop = loop;
+            if (!source.isPlaying)
+            {
+                source.Play();
+            }
         }
     }
 }

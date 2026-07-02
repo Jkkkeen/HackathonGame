@@ -16,24 +16,42 @@ namespace FeatherDetective
             }
         }
 
-        public IEnumerator AnimateRoute(Vector3[] routePoints)
+        public IEnumerator AnimateRoute(Vector3[] points)
         {
-            if (lineRenderer == null || routePoints == null || routePoints.Length == 0)
+            if (lineRenderer == null || points == null || points.Length < 2)
             {
                 yield break;
             }
 
-            lineRenderer.positionCount = 0;
-            for (var i = 0; i < routePoints.Length; i++)
-            {
-                lineRenderer.positionCount = i + 1;
-                lineRenderer.SetPosition(i, routePoints[i]);
+            var originalStartWidth = lineRenderer.startWidth;
+            var originalEndWidth = lineRenderer.endWidth;
 
-                if (secondsPerSegment > 0f)
-                {
-                    yield return new WaitForSeconds(secondsPerSegment);
-                }
+            lineRenderer.enabled = true;
+            lineRenderer.positionCount = points.Length;
+            lineRenderer.SetPositions(points);
+            lineRenderer.startWidth = 0f;
+            lineRenderer.endWidth = 0f;
+
+            var elapsed = 0f;
+            var duration = secondsPerSegment * (points.Length - 1);
+            while (elapsed < duration)
+            {
+                elapsed += Time.deltaTime;
+                var t = duration <= 0f ? 1f : Mathf.Clamp01(elapsed / duration);
+                lineRenderer.startWidth = Mathf.Lerp(0f, originalStartWidth, t);
+                lineRenderer.endWidth = Mathf.Lerp(0f, originalEndWidth, t);
+                yield return null;
             }
+
+            lineRenderer.startWidth = originalStartWidth;
+            lineRenderer.endWidth = originalEndWidth;
+
+            if (secondsPerSegment > 0f)
+            {
+                yield return new WaitForSeconds(Mathf.Min(0.2f, secondsPerSegment));
+            }
+
+            lineRenderer.enabled = false;
         }
 
         public void Clear()
@@ -41,6 +59,7 @@ namespace FeatherDetective
             if (lineRenderer != null)
             {
                 lineRenderer.positionCount = 0;
+                lineRenderer.enabled = false;
             }
         }
     }

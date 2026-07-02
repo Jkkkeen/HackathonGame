@@ -18,6 +18,17 @@ namespace FeatherDetective
             CaptureOriginalPosition();
         }
 
+        public void ConfigureForBuilder(Camera newMemoryCamera, AudioSource newImpactAudioSource)
+        {
+            memoryCamera = newMemoryCamera;
+            breathSource = newImpactAudioSource;
+
+            if (memoryCamera != null)
+            {
+                memoryCamera.enabled = false;
+            }
+        }
+
         public IEnumerator PlayRhythm(float duration)
         {
             CaptureOriginalPosition();

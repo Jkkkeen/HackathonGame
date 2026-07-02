@@ -17,15 +17,19 @@ namespace FeatherDetective
                 yield break;
             }
 
+            var previousAlpha = context.DarkOverlay.alpha;
             yield return FadeOverlay(context.DarkOverlay, context.DarkOverlay.alpha, 0.85f, darkenDuration);
 
             if (context.AudioSource != null)
             {
+                context.AudioSource.spatialBlend = 1f;
+                context.AudioSource.panStereo = 0f;
+                context.AudioSource.rolloffMode = AudioRolloffMode.Linear;
                 context.AudioSource.PlayOneShot(ProceduralAudio.CreateTone("Crow Memory", 220f, 0.25f, 0.12f));
             }
 
             yield return new WaitForSeconds(holdDuration);
-            yield return FadeOverlay(context.DarkOverlay, context.DarkOverlay.alpha, 0f, darkenDuration);
+            yield return FadeOverlay(context.DarkOverlay, context.DarkOverlay.alpha, previousAlpha, darkenDuration);
         }
 
         private static IEnumerator FadeOverlay(CanvasGroup overlay, float from, float to, float duration)

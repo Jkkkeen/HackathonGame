@@ -4,48 +4,61 @@ namespace FeatherDetective
 {
     public sealed class ColorMemoryTarget : MonoBehaviour
     {
-        [SerializeField] private Renderer targetRenderer;
+        [SerializeField] private Color memoryColor = Color.white;
 
-        private Color originalColor = Color.white;
-        private bool hasOriginalColor;
+        private Renderer cachedRenderer;
+        private Color originalColor;
+
+        public Color MemoryColor => memoryColor;
 
         private void Awake()
         {
-            if (targetRenderer == null)
-            {
-                targetRenderer = GetComponent<Renderer>();
-            }
-
-            CaptureOriginalColor();
+            cachedRenderer = GetComponent<Renderer>();
+            originalColor = cachedRenderer != null ? cachedRenderer.material.color : Color.white;
         }
 
-        public void ApplyMagpieState(Color color)
+        public void ApplyMagpieState(Color[] importantColors)
         {
-            CaptureOriginalColor();
-
-            if (targetRenderer != null)
-            {
-                targetRenderer.material.color = color;
-            }
-        }
-
-        public void Restore()
-        {
-            if (targetRenderer != null && hasOriginalColor)
-            {
-                targetRenderer.material.color = originalColor;
-            }
-        }
-
-        private void CaptureOriginalColor()
-        {
-            if (hasOriginalColor || targetRenderer == null)
+            if (cachedRenderer == null)
             {
                 return;
             }
 
-            originalColor = targetRenderer.material.color;
-            hasOriginalColor = true;
+            if (IsImportantColor(importantColors))
+            {
+                cachedRenderer.material.color = originalColor;
+                return;
+            }
+
+            var grayscale = originalColor.grayscale;
+            cachedRenderer.material.color = new Color(grayscale, grayscale, grayscale, originalColor.a);
+        }
+
+        public void Restore()
+        {
+            if (cachedRenderer != null)
+            {
+                cachedRenderer.material.color = originalColor;
+            }
+        }
+
+        private bool IsImportantColor(Color[] importantColors)
+        {
+            if (importantColors == null)
+            {
+                return false;
+            }
+
+            var targetColor = (Vector4)memoryColor;
+            for (var i = 0; i < importantColors.Length; i++)
+            {
+                if (Vector4.Distance(targetColor, importantColors[i]) < 0.08f)
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
     }
 }
