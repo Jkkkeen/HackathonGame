@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+using System.Reflection;
 using NUnit.Framework;
 using UnityEngine;
 
@@ -5,12 +7,28 @@ namespace FeatherDetective.Tests
 {
     public sealed class PerchSelectorTests
     {
+        private readonly List<GameObject> createdObjects = new List<GameObject>();
+
+        [TearDown]
+        public void TearDown()
+        {
+            for (var i = createdObjects.Count - 1; i >= 0; i--)
+            {
+                if (createdObjects[i] != null)
+                {
+                    Object.DestroyImmediate(createdObjects[i]);
+                }
+            }
+
+            createdObjects.Clear();
+        }
+
         [Test]
         public void SelectBestReachablePerchPrefersForwardLinkedPerch()
         {
-            var originObject = new GameObject("origin");
-            var forwardObject = new GameObject("forward");
-            var sideObject = new GameObject("side");
+            var originObject = CreateGameObject("origin");
+            var forwardObject = CreateGameObject("forward");
+            var sideObject = CreateGameObject("side");
 
             var origin = originObject.AddComponent<PerchNode>();
             var forward = forwardObject.AddComponent<PerchNode>();
@@ -24,17 +42,13 @@ namespace FeatherDetective.Tests
             var selected = PerchSelector.SelectBestReachable(origin, Vector3.zero, Vector3.forward, 6f, 0.25f);
 
             Assert.That(selected, Is.EqualTo(forward));
-
-            Object.DestroyImmediate(originObject);
-            Object.DestroyImmediate(forwardObject);
-            Object.DestroyImmediate(sideObject);
         }
 
         [Test]
         public void SelectBestReachablePerchReturnsNullWhenNoLinkedPerchMatchesDistance()
         {
-            var originObject = new GameObject("origin");
-            var farObject = new GameObject("far");
+            var originObject = CreateGameObject("origin");
+            var farObject = CreateGameObject("far");
 
             var origin = originObject.AddComponent<PerchNode>();
             var far = farObject.AddComponent<PerchNode>();
@@ -45,9 +59,41 @@ namespace FeatherDetective.Tests
             var selected = PerchSelector.SelectBestReachable(origin, Vector3.zero, Vector3.forward, 6f, 0.25f);
 
             Assert.That(selected, Is.Null);
+        }
 
-            Object.DestroyImmediate(originObject);
-            Object.DestroyImmediate(farObject);
+        [Test]
+        public void TryGetInspectableFindsInspectableOnParentOfCollider()
+        {
+            var parentObject = CreateGameObject("inspectable");
+            var childObject = CreateGameObject("child collider");
+            childObject.transform.SetParent(parentObject.transform);
+            var expected = parentObject.AddComponent<InspectableStub>();
+            var collider = childObject.AddComponent<BoxCollider>();
+
+            var method = typeof(BirdPlayerController).GetMethod("TryGetInspectable", BindingFlags.NonPublic | BindingFlags.Static);
+            Assert.That(method, Is.Not.Null);
+
+            var parameters = new object[] { collider, null };
+            var found = (bool)method.Invoke(null, parameters);
+
+            Assert.That(found, Is.True);
+            Assert.That(parameters[1], Is.SameAs(expected));
+        }
+
+        private GameObject CreateGameObject(string name)
+        {
+            var gameObject = new GameObject(name);
+            createdObjects.Add(gameObject);
+            return gameObject;
+        }
+
+        private sealed class InspectableStub : MonoBehaviour, IInspectable
+        {
+            public string PromptText => "Inspect";
+
+            public void Inspect()
+            {
+            }
         }
     }
 }

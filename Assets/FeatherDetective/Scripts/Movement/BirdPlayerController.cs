@@ -136,7 +136,7 @@ namespace FeatherDetective
 
         private static bool TryGetInspectable(Collider other, out IInspectable inspectable)
         {
-            var behaviours = other.GetComponents<MonoBehaviour>();
+            var behaviours = other.GetComponentsInParent<MonoBehaviour>();
             foreach (var behaviour in behaviours)
             {
                 if (behaviour is IInspectable candidate)
