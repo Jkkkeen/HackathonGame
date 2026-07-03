@@ -1,6 +1,19 @@
 # HackathonGame
 
-Small Unity narrative detective prototype about a bird investigating feathers in a city park.
+Small narrative detective prototype about a bird investigating feathers in a city park.
+
+The repository now tracks two directions:
+
+- Unity prototype: a playable 3D park exploration slice.
+- Web prototype: a lighter clickable narrative deduction version planned in `web-prototype/`.
+
+## Web Prototype
+
+The current recommended direction is a browser-based clickable deduction prototype. It lowers movement and 3D complexity, while preserving feather memories, clue comparison, the nest board, and the quiet hospital ending.
+
+Read the full web gameplay structure and page flow here:
+
+`web-prototype/README.md`
 
 ## Open
 
