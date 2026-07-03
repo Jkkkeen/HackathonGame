@@ -78,6 +78,43 @@ namespace FeatherDetective.Tests
         }
 
         [Test]
+        public void CollectFeatherNullDoesNotClearSelectionOrAddToCollection()
+        {
+            var crow = CreateFeather("crow-bench", BirdSpecies.Crow, DeductionSlotId.LastFeedingDay);
+            var runtimeObject = new GameObject("Investigation Runtime");
+            var uiObject = new GameObject("Feather Inventory UI");
+            var labelObject = new GameObject("Feather Inventory Label", typeof(RectTransform), typeof(CanvasRenderer), typeof(UnityEngine.UI.Text));
+
+            try
+            {
+                var runtime = runtimeObject.AddComponent<InvestigationRuntime>();
+                var ui = uiObject.AddComponent<FeatherInventoryUI>();
+                var label = labelObject.GetComponent<UnityEngine.UI.Text>();
+                label.font = Resources.GetBuiltinResource<Font>("Arial.ttf");
+                ui.ConfigureForBuilder(label);
+                runtime.ConfigureForBuilder(null, ui);
+
+                Assert.That(runtime.CollectFeather(crow), Is.True);
+                Assert.That(runtime.SelectedFeather, Is.EqualTo(crow));
+                Assert.That(runtime.CollectedFeathers, Has.Count.EqualTo(1));
+                Assert.That(label.text, Is.EqualTo("Feathers 1/12\nSelected: crow-bench"));
+
+                label.text = "sentinel";
+
+                Assert.That(runtime.CollectFeather(null), Is.False);
+                Assert.That(runtime.SelectedFeather, Is.EqualTo(crow));
+                Assert.That(runtime.CollectedFeathers, Has.Count.EqualTo(1));
+                Assert.That(label.text, Is.EqualTo("sentinel"));
+            }
+            finally
+            {
+                Object.DestroyImmediate(runtimeObject);
+                Object.DestroyImmediate(uiObject);
+                Object.DestroyImmediate(labelObject);
+            }
+        }
+
+        [Test]
         public void FeatherPickupWithoutDefinitionDoesNotDisableCollectedVisual()
         {
             var pickupObject = new GameObject("Feather Pickup");

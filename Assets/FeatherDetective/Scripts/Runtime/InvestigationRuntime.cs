@@ -23,6 +23,11 @@ namespace FeatherDetective
 
         public bool CollectFeather(FeatherDefinition feather)
         {
+            if (feather == null)
+            {
+                return false;
+            }
+
             var collected = State.Collect(feather);
             SelectedFeather = feather;
 
@@ -33,7 +38,7 @@ namespace FeatherDetective
 
             RefreshInventory();
 
-            if (feather != null && memoryPlayback != null)
+            if (memoryPlayback != null)
             {
                 memoryPlayback.PlayMemory(feather);
             }
