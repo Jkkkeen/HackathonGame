@@ -17,8 +17,8 @@ namespace FeatherDetective
 
         private void Awake()
         {
-            CaptureOriginalState(true);
             ConfigureSources();
+            CaptureOriginalState(true);
         }
 
         public void ConfigureForBuilder(AudioSource newWindSource, AudioSource newInsectSource, Transform newFlockRoot)
@@ -27,8 +27,8 @@ namespace FeatherDetective
             insectSource = newInsectSource;
             flockRoot = newFlockRoot;
 
-            CaptureOriginalState(true);
             ConfigureSources();
+            CaptureOriginalState(true);
         }
 
         public IEnumerator ShiftSparrowAtmosphere(float duration)

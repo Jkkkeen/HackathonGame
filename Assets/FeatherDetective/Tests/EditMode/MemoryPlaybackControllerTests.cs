@@ -114,15 +114,22 @@ namespace FeatherDetective.Tests
         }
 
         [UnityTest]
-        public IEnumerator RouteLineRendererEnablesDuringAnimationAndHidesAfterPlayback()
+        public IEnumerator RouteLineRendererUsesDurationForWidthProgress()
         {
-            var gameObject = new GameObject("Route Line Renderer Test");
+            var instantObject = new GameObject("Instant Route Line Renderer Test");
+            var longObject = new GameObject("Long Route Line Renderer Test");
             try
             {
-                var lineRenderer = gameObject.AddComponent<LineRenderer>();
-                lineRenderer.startWidth = 0.4f;
-                lineRenderer.endWidth = 0.2f;
-                var routeRenderer = gameObject.AddComponent<RouteLineRenderer>();
+                var instantLine = instantObject.AddComponent<LineRenderer>();
+                instantLine.startWidth = 0.4f;
+                instantLine.endWidth = 0.2f;
+                var instantRouteRenderer = instantObject.AddComponent<RouteLineRenderer>();
+
+                var longLine = longObject.AddComponent<LineRenderer>();
+                longLine.startWidth = 0.4f;
+                longLine.endWidth = 0.2f;
+                var longRouteRenderer = longObject.AddComponent<RouteLineRenderer>();
+
                 var route = new[]
                 {
                     Vector3.zero,
@@ -131,27 +138,31 @@ namespace FeatherDetective.Tests
 
                 yield return null;
 
-                var animation = routeRenderer.AnimateRoute(route, 0.5f);
-                Assert.That(animation.MoveNext(), Is.True);
-                Assert.That(lineRenderer.enabled, Is.True);
-                Assert.That(lineRenderer.positionCount, Is.EqualTo(2));
-                Assert.That(lineRenderer.startWidth, Is.GreaterThanOrEqualTo(0f));
-                Assert.That(lineRenderer.startWidth, Is.LessThan(0.4f));
-                Assert.That(lineRenderer.endWidth, Is.GreaterThanOrEqualTo(0f));
-                Assert.That(lineRenderer.endWidth, Is.LessThan(0.2f));
+                var instantAnimation = instantRouteRenderer.AnimateRoute(route, 0f);
+                var longAnimation = longRouteRenderer.AnimateRoute(route, 1000f);
 
-                while (animation.MoveNext())
+                Assert.That(instantAnimation.MoveNext(), Is.True);
+                Assert.That(longAnimation.MoveNext(), Is.True);
+
+                Assert.That(instantLine.enabled, Is.True);
+                Assert.That(longLine.enabled, Is.True);
+                Assert.That(instantLine.positionCount, Is.EqualTo(2));
+                Assert.That(longLine.positionCount, Is.EqualTo(2));
+                Assert.That(instantLine.startWidth, Is.EqualTo(0.4f).Within(0.001f));
+                Assert.That(longLine.startWidth, Is.GreaterThanOrEqualTo(0f));
+                Assert.That(longLine.startWidth, Is.LessThan(instantLine.startWidth));
+
+                while (instantAnimation.MoveNext())
                 {
-                    yield return animation.Current;
+                    yield return instantAnimation.Current;
                 }
 
-                Assert.That(lineRenderer.startWidth, Is.EqualTo(0.4f).Within(0.001f));
-                Assert.That(lineRenderer.endWidth, Is.EqualTo(0.2f).Within(0.001f));
-                Assert.That(lineRenderer.enabled, Is.False);
+                Assert.That(instantLine.enabled, Is.False);
             }
             finally
             {
-                Object.DestroyImmediate(gameObject);
+                Object.DestroyImmediate(instantObject);
+                Object.DestroyImmediate(longObject);
             }
         }
 
@@ -313,7 +324,7 @@ namespace FeatherDetective.Tests
         }
 
         [Test]
-        public void AtmosphereRestoreRestoresStoppedSourceClipLoopAndVolume()
+        public void AtmosphereRestoreReturnsToPostSetupAmbienceBaseline()
         {
             var gameObject = new GameObject("Atmosphere Restore Test");
             var flockObject = new GameObject("Flock Root");
@@ -331,23 +342,27 @@ namespace FeatherDetective.Tests
 
                 var atmosphere = gameObject.AddComponent<AtmosphereController>();
                 atmosphere.ConfigureForBuilder(wind, insect, flockObject.transform);
+                var baselineWindClip = wind.clip;
+                var baselineInsectClip = insect.clip;
+                var baselineWindLoop = wind.loop;
+                var baselineInsectLoop = insect.loop;
 
                 wind.clip = AudioClip.Create("Dirty Wind", 8, 1, 44100, false);
-                wind.loop = true;
+                wind.loop = false;
                 wind.volume = 1f;
-                insect.loop = true;
+                insect.clip = AudioClip.Create("Dirty Insects", 8, 1, 44100, false);
+                insect.loop = false;
                 insect.volume = 0.1f;
                 flockObject.transform.localScale = Vector3.one;
 
                 atmosphere.Restore();
 
-                Assert.That(wind.clip, Is.EqualTo(originalWindClip));
-                Assert.That(wind.loop, Is.False);
+                Assert.That(wind.clip, Is.EqualTo(baselineWindClip));
+                Assert.That(wind.loop, Is.EqualTo(baselineWindLoop));
                 Assert.That(wind.volume, Is.EqualTo(0.25f).Within(0.001f));
-                Assert.That(wind.isPlaying, Is.False);
-                Assert.That(insect.loop, Is.False);
+                Assert.That(insect.clip, Is.EqualTo(baselineInsectClip));
+                Assert.That(insect.loop, Is.EqualTo(baselineInsectLoop));
                 Assert.That(insect.volume, Is.EqualTo(0.75f).Within(0.001f));
-                Assert.That(insect.isPlaying, Is.False);
                 Assert.That(flockObject.transform.localScale, Is.EqualTo(new Vector3(2f, 2f, 2f)));
             }
             finally
