@@ -19,7 +19,7 @@ namespace FeatherDetective
 
         public void Inspect()
         {
-            if (runtime == null)
+            if (definition == null || runtime == null)
             {
                 return;
             }

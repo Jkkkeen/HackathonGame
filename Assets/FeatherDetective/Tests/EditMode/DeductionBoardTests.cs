@@ -1,4 +1,5 @@
 using NUnit.Framework;
+using UnityEditor;
 using UnityEngine;
 
 namespace FeatherDetective.Tests
@@ -73,6 +74,35 @@ namespace FeatherDetective.Tests
             finally
             {
                 Object.DestroyImmediate(runtimeObject);
+            }
+        }
+
+        [Test]
+        public void FeatherPickupWithoutDefinitionDoesNotDisableCollectedVisual()
+        {
+            var pickupObject = new GameObject("Feather Pickup");
+            var runtimeObject = new GameObject("Investigation Runtime");
+            var visualObject = new GameObject("Feather Visual");
+
+            try
+            {
+                var pickup = pickupObject.AddComponent<FeatherPickup>();
+                var runtime = runtimeObject.AddComponent<InvestigationRuntime>();
+                pickup.ConfigureForBuilder(null, runtime);
+
+                var serializedPickup = new SerializedObject(pickup);
+                serializedPickup.FindProperty("collectedVisual").objectReferenceValue = visualObject;
+                serializedPickup.ApplyModifiedPropertiesWithoutUndo();
+
+                pickup.Inspect();
+
+                Assert.That(visualObject.activeSelf, Is.True);
+            }
+            finally
+            {
+                Object.DestroyImmediate(pickupObject);
+                Object.DestroyImmediate(runtimeObject);
+                Object.DestroyImmediate(visualObject);
             }
         }
 
