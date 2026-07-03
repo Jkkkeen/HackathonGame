@@ -65,6 +65,10 @@ namespace FeatherDetective.Tests
                 runtime.SelectNextCollectedFeather();
 
                 Assert.That(runtime.SelectedFeather, Is.EqualTo(crow));
+
+                Assert.That(runtime.CollectFeather(pigeon), Is.False);
+                Assert.That(runtime.CollectedFeathers, Has.Count.EqualTo(2));
+                Assert.That(runtime.SelectedFeather, Is.EqualTo(pigeon));
             }
             finally
             {

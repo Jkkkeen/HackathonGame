@@ -24,21 +24,21 @@ namespace FeatherDetective
         public bool CollectFeather(FeatherDefinition feather)
         {
             var collected = State.Collect(feather);
-            if (!collected)
+            SelectedFeather = feather;
+
+            if (collected)
             {
-                return false;
+                collectedFeathers.Add(feather);
             }
 
-            collectedFeathers.Add(feather);
-            SelectedFeather = feather;
             RefreshInventory();
 
-            if (memoryPlayback != null)
+            if (feather != null && memoryPlayback != null)
             {
                 memoryPlayback.PlayMemory(feather);
             }
 
-            return true;
+            return collected;
         }
 
         public bool TryPlaceSelected(DeductionSlotId slotId)
