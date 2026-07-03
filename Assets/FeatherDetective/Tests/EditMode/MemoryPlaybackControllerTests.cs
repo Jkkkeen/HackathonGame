@@ -68,7 +68,6 @@ namespace FeatherDetective.Tests
             try
             {
                 var renderer = gameObject.GetComponent<Renderer>();
-                renderer.material = new Material(Shader.Find("Standard"));
                 renderer.material.color = new Color(0.1f, 0.8f, 0.2f, 0.5f);
 
                 var target = gameObject.AddComponent<ColorMemoryTarget>();
@@ -96,7 +95,6 @@ namespace FeatherDetective.Tests
             try
             {
                 var renderer = gameObject.GetComponent<Renderer>();
-                renderer.material = new Material(Shader.Find("Standard"));
                 renderer.material.color = new Color(0.2f, 0.4f, 0.8f, 0.25f);
 
                 var target = gameObject.AddComponent<ColorMemoryTarget>();
@@ -133,16 +131,22 @@ namespace FeatherDetective.Tests
 
                 yield return null;
 
-                var animation = routeRenderer.AnimateRoute(route, 0f);
+                var animation = routeRenderer.AnimateRoute(route, 0.5f);
                 Assert.That(animation.MoveNext(), Is.True);
                 Assert.That(lineRenderer.enabled, Is.True);
                 Assert.That(lineRenderer.positionCount, Is.EqualTo(2));
+                Assert.That(lineRenderer.startWidth, Is.GreaterThanOrEqualTo(0f));
+                Assert.That(lineRenderer.startWidth, Is.LessThan(0.4f));
+                Assert.That(lineRenderer.endWidth, Is.GreaterThanOrEqualTo(0f));
+                Assert.That(lineRenderer.endWidth, Is.LessThan(0.2f));
 
                 while (animation.MoveNext())
                 {
                     yield return animation.Current;
                 }
 
+                Assert.That(lineRenderer.startWidth, Is.EqualTo(0.4f).Within(0.001f));
+                Assert.That(lineRenderer.endWidth, Is.EqualTo(0.2f).Within(0.001f));
                 Assert.That(lineRenderer.enabled, Is.False);
             }
             finally
@@ -235,7 +239,6 @@ namespace FeatherDetective.Tests
                 audioSource.loop = true;
 
                 var renderer = colorObject.GetComponent<Renderer>();
-                renderer.material = new Material(Shader.Find("Standard"));
                 renderer.material.color = Color.yellow;
                 var colorTarget = colorObject.AddComponent<ColorMemoryTarget>();
                 colorTarget.ConfigureForBuilder(Color.yellow);
@@ -265,6 +268,7 @@ namespace FeatherDetective.Tests
                 Assert.That(audioSource.spatialBlend, Is.EqualTo(0.3f).Within(0.001f));
                 Assert.That(audioSource.panStereo, Is.EqualTo(-0.4f).Within(0.001f));
                 Assert.That(audioSource.loop, Is.True);
+                Assert.That(audioSource.isPlaying, Is.False);
                 Assert.That(renderer.material.color, Is.EqualTo(Color.yellow));
                 Assert.That(lineRenderer.enabled, Is.False);
                 Assert.That(lineRenderer.positionCount, Is.EqualTo(0));
@@ -276,6 +280,101 @@ namespace FeatherDetective.Tests
                 Object.DestroyImmediate(colorObject);
                 Object.DestroyImmediate(routeObject);
                 Object.DestroyImmediate(rigObject);
+            }
+        }
+
+        [Test]
+        public void RestoreAfterMemoryRestoresStoppedAudioClipAndLoopDefaults()
+        {
+            var contextObject = new GameObject("Memory Audio Restore Test");
+            try
+            {
+                var audioSource = contextObject.AddComponent<AudioSource>();
+                var originalClip = AudioClip.Create("Original Memory Clip", 8, 1, 44100, false);
+                audioSource.clip = originalClip;
+                audioSource.loop = false;
+
+                var context = contextObject.AddComponent<MemoryContext>();
+                context.ConfigureForBuilder(null, audioSource, new ColorMemoryTarget[0], null, null, null);
+
+                audioSource.clip = AudioClip.Create("Dirty Memory Clip", 8, 1, 44100, false);
+                audioSource.loop = true;
+
+                context.RestoreAfterMemory();
+
+                Assert.That(audioSource.clip, Is.EqualTo(originalClip));
+                Assert.That(audioSource.loop, Is.False);
+                Assert.That(audioSource.isPlaying, Is.False);
+            }
+            finally
+            {
+                Object.DestroyImmediate(contextObject);
+            }
+        }
+
+        [Test]
+        public void AtmosphereRestoreRestoresStoppedSourceClipLoopAndVolume()
+        {
+            var gameObject = new GameObject("Atmosphere Restore Test");
+            var flockObject = new GameObject("Flock Root");
+            try
+            {
+                var wind = gameObject.AddComponent<AudioSource>();
+                var insect = gameObject.AddComponent<AudioSource>();
+                var originalWindClip = AudioClip.Create("Original Wind", 8, 1, 44100, false);
+                wind.clip = originalWindClip;
+                wind.loop = false;
+                wind.volume = 0.25f;
+                insect.loop = false;
+                insect.volume = 0.75f;
+                flockObject.transform.localScale = new Vector3(2f, 2f, 2f);
+
+                var atmosphere = gameObject.AddComponent<AtmosphereController>();
+                atmosphere.ConfigureForBuilder(wind, insect, flockObject.transform);
+
+                wind.clip = AudioClip.Create("Dirty Wind", 8, 1, 44100, false);
+                wind.loop = true;
+                wind.volume = 1f;
+                insect.loop = true;
+                insect.volume = 0.1f;
+                flockObject.transform.localScale = Vector3.one;
+
+                atmosphere.Restore();
+
+                Assert.That(wind.clip, Is.EqualTo(originalWindClip));
+                Assert.That(wind.loop, Is.False);
+                Assert.That(wind.volume, Is.EqualTo(0.25f).Within(0.001f));
+                Assert.That(wind.isPlaying, Is.False);
+                Assert.That(insect.loop, Is.False);
+                Assert.That(insect.volume, Is.EqualTo(0.75f).Within(0.001f));
+                Assert.That(insect.isPlaying, Is.False);
+                Assert.That(flockObject.transform.localScale, Is.EqualTo(new Vector3(2f, 2f, 2f)));
+            }
+            finally
+            {
+                Object.DestroyImmediate(gameObject);
+                Object.DestroyImmediate(flockObject);
+            }
+        }
+
+        [Test]
+        public void FirstPersonRigConfigureForBuilderResetsRestoreOrigin()
+        {
+            var gameObject = new GameObject("First Person Rig Builder Origin Test");
+            try
+            {
+                var rig = gameObject.AddComponent<FirstPersonMemoryRig>();
+                gameObject.transform.localPosition = new Vector3(3f, 4f, 5f);
+
+                rig.ConfigureForBuilder(null, null);
+                gameObject.transform.localPosition = Vector3.zero;
+                rig.Restore();
+
+                Assert.That(gameObject.transform.localPosition, Is.EqualTo(new Vector3(3f, 4f, 5f)));
+            }
+            finally
+            {
+                Object.DestroyImmediate(gameObject);
             }
         }
 

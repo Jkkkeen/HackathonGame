@@ -27,11 +27,13 @@ namespace FeatherDetective
             {
                 memoryCamera.enabled = false;
             }
+
+            CaptureOriginalPosition(true);
         }
 
         public IEnumerator PlayRhythm(float duration)
         {
-            CaptureOriginalPosition();
+            CaptureOriginalPosition(false);
 
             if (memoryCamera != null)
             {
@@ -76,9 +78,9 @@ namespace FeatherDetective
             }
         }
 
-        private void CaptureOriginalPosition()
+        private void CaptureOriginalPosition(bool force = false)
         {
-            if (hasOriginalPosition)
+            if (hasOriginalPosition && !force)
             {
                 return;
             }

@@ -12,10 +12,12 @@ namespace FeatherDetective
         private float originalWindVolume;
         private float originalInsectVolume;
         private Vector3 originalFlockScale;
+        private SourceState originalWindState;
+        private SourceState originalInsectState;
 
         private void Awake()
         {
-            CaptureOriginalState();
+            CaptureOriginalState(true);
             ConfigureSources();
         }
 
@@ -25,13 +27,13 @@ namespace FeatherDetective
             insectSource = newInsectSource;
             flockRoot = newFlockRoot;
 
-            CaptureOriginalState();
+            CaptureOriginalState(true);
             ConfigureSources();
         }
 
         public IEnumerator ShiftSparrowAtmosphere(float duration)
         {
-            CaptureOriginalState();
+            CaptureOriginalState(false);
 
             var targetWindVolume = originalWindVolume * 0.3f;
             var targetInsectVolume = originalInsectVolume * 1.6f;
@@ -44,6 +46,8 @@ namespace FeatherDetective
         public void Restore()
         {
             SetAtmosphere(originalWindVolume, originalInsectVolume, originalFlockScale);
+            RestoreSource(windSource, originalWindState);
+            RestoreSource(insectSource, originalInsectState);
         }
 
         private IEnumerator ShiftAtmosphere(float windVolume, float insectVolume, Vector3 flockScale, float duration)
@@ -85,11 +89,16 @@ namespace FeatherDetective
             }
         }
 
-        private void CaptureOriginalState()
+        private void CaptureOriginalState(bool captureSourceState)
         {
             originalWindVolume = windSource != null ? windSource.volume : 0f;
             originalInsectVolume = insectSource != null ? insectSource.volume : 0f;
             originalFlockScale = flockRoot != null ? flockRoot.localScale : Vector3.one;
+            if (captureSourceState)
+            {
+                originalWindState = CaptureSourceState(windSource);
+                originalInsectState = CaptureSourceState(insectSource);
+            }
         }
 
         private void ConfigureSources()
@@ -114,6 +123,54 @@ namespace FeatherDetective
             if (!source.isPlaying)
             {
                 source.Play();
+            }
+        }
+
+        private static SourceState CaptureSourceState(AudioSource source)
+        {
+            if (source == null)
+            {
+                return new SourceState(null, false, false, 0f);
+            }
+
+            return new SourceState(
+                source.clip,
+                source.loop,
+                source.isPlaying,
+                source.clip != null ? source.time : 0f);
+        }
+
+        private static void RestoreSource(AudioSource source, SourceState state)
+        {
+            if (source == null)
+            {
+                return;
+            }
+
+            source.Stop();
+            source.clip = state.clip;
+            source.loop = state.loop;
+
+            if (state.wasPlaying && state.clip != null)
+            {
+                source.time = Mathf.Clamp(state.time, 0f, state.clip.length);
+                source.Play();
+            }
+        }
+
+        private struct SourceState
+        {
+            public readonly AudioClip clip;
+            public readonly bool loop;
+            public readonly bool wasPlaying;
+            public readonly float time;
+
+            public SourceState(AudioClip clip, bool loop, bool wasPlaying, float time)
+            {
+                this.clip = clip;
+                this.loop = loop;
+                this.wasPlaying = wasPlaying;
+                this.time = time;
             }
         }
     }

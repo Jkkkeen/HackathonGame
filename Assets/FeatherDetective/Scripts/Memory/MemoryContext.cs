@@ -17,6 +17,8 @@ namespace FeatherDetective
         private AudioRolloffMode defaultAudioRolloffMode;
         private AudioClip defaultAudioClip;
         private bool defaultAudioLoop;
+        private bool defaultAudioWasPlaying;
+        private float defaultAudioTime;
         private bool hasDefaults;
 
         public CanvasGroup DarkOverlay => darkOverlay;
@@ -65,6 +67,12 @@ namespace FeatherDetective
                 audioSource.rolloffMode = defaultAudioRolloffMode;
                 audioSource.clip = defaultAudioClip;
                 audioSource.loop = defaultAudioLoop;
+
+                if (defaultAudioWasPlaying && defaultAudioClip != null)
+                {
+                    audioSource.time = Mathf.Clamp(defaultAudioTime, 0f, defaultAudioClip.length);
+                    audioSource.Play();
+                }
             }
 
             if (colorTargets != null)
@@ -107,6 +115,8 @@ namespace FeatherDetective
             defaultAudioRolloffMode = audioSource != null ? audioSource.rolloffMode : AudioRolloffMode.Logarithmic;
             defaultAudioClip = audioSource != null ? audioSource.clip : null;
             defaultAudioLoop = audioSource != null && audioSource.loop;
+            defaultAudioWasPlaying = audioSource != null && audioSource.isPlaying;
+            defaultAudioTime = audioSource != null && audioSource.clip != null ? audioSource.time : 0f;
             hasDefaults = true;
         }
     }
