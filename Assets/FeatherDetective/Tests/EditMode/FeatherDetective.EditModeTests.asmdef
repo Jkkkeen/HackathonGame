@@ -2,7 +2,8 @@
   "name": "FeatherDetective.EditModeTests",
   "rootNamespace": "FeatherDetective.Tests",
   "references": [
-    "FeatherDetective.Runtime"
+    "FeatherDetective.Runtime",
+    "FeatherDetective.Editor"
   ],
   "includePlatforms": [
     "Editor"
