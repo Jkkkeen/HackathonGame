@@ -11,6 +11,7 @@ namespace FeatherDetective
     public static class PrototypeSceneBuilder
     {
         private const string ScenePath = "Assets/FeatherDetective/Scenes/ParkPrototype.unity";
+        private const string SolutionPath = "Assets/FeatherDetective/Data/DeductionSolution.asset";
         private const string DataPath = "Assets/FeatherDetective/Data/Feathers";
 
         [MenuItem("Feather Detective/Build Prototype Scene")]
@@ -124,7 +125,15 @@ namespace FeatherDetective
 
         private static DeductionSolution CreateSolution(FeatherDefinition[] feathers)
         {
-            var solution = ScriptableObject.CreateInstance<DeductionSolution>();
+            EnsureAssetFolder(Path.GetDirectoryName(SolutionPath)?.Replace("\\", "/") ?? "Assets/FeatherDetective/Data");
+
+            var solution = AssetDatabase.LoadAssetAtPath<DeductionSolution>(SolutionPath);
+            if (solution == null)
+            {
+                solution = ScriptableObject.CreateInstance<DeductionSolution>();
+                AssetDatabase.CreateAsset(solution, SolutionPath);
+            }
+
             solution.ConfigureForTests(new[]
             {
                 new DeductionAnswer(DeductionSlotId.LastFeedingDay, feathers[0]),
@@ -133,6 +142,7 @@ namespace FeatherDetective
                 new DeductionAnswer(DeductionSlotId.WhyBirdsWaited, feathers[4]),
                 new DeductionAnswer(DeductionSlotId.WhatEvidenceMeans, feathers[7])
             });
+            EditorUtility.SetDirty(solution);
             return solution;
         }
 
@@ -425,6 +435,10 @@ namespace FeatherDetective
 
                 var pickup = featherObject.AddComponent<FeatherPickup>();
                 pickup.ConfigureForBuilder(feathers[i], runtime);
+
+                var serializedPickup = new SerializedObject(pickup);
+                serializedPickup.FindProperty("collectedVisual").objectReferenceValue = featherObject;
+                serializedPickup.ApplyModifiedPropertiesWithoutUndo();
             }
         }
 
@@ -479,6 +493,11 @@ namespace FeatherDetective
             var camera = cameraObject.AddComponent<Camera>();
             camera.clearFlags = CameraClearFlags.SolidColor;
             camera.backgroundColor = new Color(0.68f, 0.82f, 0.94f);
+
+            if (Object.FindObjectOfType<AudioListener>() == null)
+            {
+                cameraObject.AddComponent<AudioListener>();
+            }
 
             var follow = cameraObject.AddComponent<FixedThirdPersonCamera>();
             var player = GameObject.Find("PlayerBird");
