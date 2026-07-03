@@ -1,0 +1,23 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5c88b688faeb9ce4a98ab63e8386d1eb, type: 3}
+  m_Name: magpie-notice
+  m_EditorClassIdentifier: 
+  id: magpie-notice
+  displayName: Notice color feather
+  species: 1
+  role: 0
+  compatibleSlots: 02000000
+  highlightColors:
+  - {r: 0.36, g: 0.62, b: 0.95, a: 1}
+  routePoints: []
+  memorySummary: Blue-white hospital sign color.

@@ -18,7 +18,7 @@ namespace FeatherDetective.Tests
                 var runtime = runtimeObject.AddComponent<InvestigationRuntime>();
                 var ui = uiObject.AddComponent<FeatherInventoryUI>();
                 var label = labelObject.GetComponent<Text>();
-                label.font = Resources.GetBuiltinResource<Font>("Arial.ttf");
+                label.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
 
                 ui.ConfigureForBuilder(label, 24);
 

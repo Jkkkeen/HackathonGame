@@ -23,6 +23,8 @@ namespace FeatherDetective
 
         public IEnumerator AnimateRoute(Vector3[] points, float duration)
         {
+            EnsureLineRenderer();
+
             if (lineRenderer == null || points == null || points.Length < 2)
             {
                 yield break;
@@ -60,10 +62,20 @@ namespace FeatherDetective
 
         public void Clear()
         {
+            EnsureLineRenderer();
+
             if (lineRenderer != null)
             {
                 lineRenderer.positionCount = 0;
                 lineRenderer.enabled = false;
+            }
+        }
+
+        private void EnsureLineRenderer()
+        {
+            if (lineRenderer == null)
+            {
+                lineRenderer = GetComponent<LineRenderer>();
             }
         }
     }

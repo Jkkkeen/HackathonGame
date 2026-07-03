@@ -65,25 +65,35 @@ namespace FeatherDetective.Tests
         public void ColorMemoryTargetPreservesConfiguredImportantColorAndRestoresOriginal()
         {
             var gameObject = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            Material material = null;
             try
             {
                 var renderer = gameObject.GetComponent<Renderer>();
-                renderer.material.color = new Color(0.1f, 0.8f, 0.2f, 0.5f);
+                material = new Material(Shader.Find("Standard"))
+                {
+                    color = new Color(0.1f, 0.8f, 0.2f, 0.5f)
+                };
+                renderer.sharedMaterial = material;
 
                 var target = gameObject.AddComponent<ColorMemoryTarget>();
                 target.ConfigureForBuilder(Color.green);
 
                 target.ApplyMagpieState(new[] { Color.green });
 
-                Assert.That(renderer.material.color, Is.EqualTo(new Color(0.1f, 0.8f, 0.2f, 0.5f)));
+                Assert.That(renderer.sharedMaterial.color, Is.EqualTo(new Color(0.1f, 0.8f, 0.2f, 0.5f)));
 
-                renderer.material.color = Color.black;
+                renderer.sharedMaterial.color = Color.black;
                 target.Restore();
 
-                Assert.That(renderer.material.color, Is.EqualTo(new Color(0.1f, 0.8f, 0.2f, 0.5f)));
+                Assert.That(renderer.sharedMaterial.color, Is.EqualTo(new Color(0.1f, 0.8f, 0.2f, 0.5f)));
             }
             finally
             {
+                if (material != null)
+                {
+                    Object.DestroyImmediate(material);
+                }
+
                 Object.DestroyImmediate(gameObject);
             }
         }
@@ -92,23 +102,33 @@ namespace FeatherDetective.Tests
         public void ColorMemoryTargetGrayscalesNonImportantConfiguredColor()
         {
             var gameObject = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            Material material = null;
             try
             {
                 var renderer = gameObject.GetComponent<Renderer>();
-                renderer.material.color = new Color(0.2f, 0.4f, 0.8f, 0.25f);
+                material = new Material(Shader.Find("Standard"))
+                {
+                    color = new Color(0.2f, 0.4f, 0.8f, 0.25f)
+                };
+                renderer.sharedMaterial = material;
 
                 var target = gameObject.AddComponent<ColorMemoryTarget>();
                 target.ConfigureForBuilder(Color.blue);
 
                 target.ApplyMagpieState(new[] { Color.red });
 
-                var color = renderer.material.color;
+                var color = renderer.sharedMaterial.color;
                 Assert.That(color.r, Is.EqualTo(color.g).Within(0.001f));
                 Assert.That(color.g, Is.EqualTo(color.b).Within(0.001f));
                 Assert.That(color.a, Is.EqualTo(0.25f).Within(0.001f));
             }
             finally
             {
+                if (material != null)
+                {
+                    Object.DestroyImmediate(material);
+                }
+
                 Object.DestroyImmediate(gameObject);
             }
         }
@@ -239,6 +259,7 @@ namespace FeatherDetective.Tests
             var colorObject = GameObject.CreatePrimitive(PrimitiveType.Cube);
             var routeObject = new GameObject("Route Renderer");
             var rigObject = new GameObject("First Person Rig");
+            Material material = null;
             try
             {
                 var overlay = contextObject.AddComponent<CanvasGroup>();
@@ -250,7 +271,11 @@ namespace FeatherDetective.Tests
                 audioSource.loop = true;
 
                 var renderer = colorObject.GetComponent<Renderer>();
-                renderer.material.color = Color.yellow;
+                material = new Material(Shader.Find("Standard"))
+                {
+                    color = Color.yellow
+                };
+                renderer.sharedMaterial = material;
                 var colorTarget = colorObject.AddComponent<ColorMemoryTarget>();
                 colorTarget.ConfigureForBuilder(Color.yellow);
 
@@ -268,7 +293,7 @@ namespace FeatherDetective.Tests
                 audioSource.spatialBlend = 1f;
                 audioSource.panStereo = 0.8f;
                 audioSource.loop = false;
-                renderer.material.color = Color.black;
+                renderer.sharedMaterial.color = Color.black;
                 lineRenderer.enabled = true;
                 lineRenderer.positionCount = 2;
                 rigObject.transform.localPosition = Vector3.zero;
@@ -280,13 +305,18 @@ namespace FeatherDetective.Tests
                 Assert.That(audioSource.panStereo, Is.EqualTo(-0.4f).Within(0.001f));
                 Assert.That(audioSource.loop, Is.True);
                 Assert.That(audioSource.isPlaying, Is.False);
-                Assert.That(renderer.material.color, Is.EqualTo(Color.yellow));
+                Assert.That(renderer.sharedMaterial.color, Is.EqualTo(Color.yellow));
                 Assert.That(lineRenderer.enabled, Is.False);
                 Assert.That(lineRenderer.positionCount, Is.EqualTo(0));
                 Assert.That(rigObject.transform.localPosition, Is.EqualTo(new Vector3(1f, 2f, 3f)));
             }
             finally
             {
+                if (material != null)
+                {
+                    Object.DestroyImmediate(material);
+                }
+
                 Object.DestroyImmediate(contextObject);
                 Object.DestroyImmediate(colorObject);
                 Object.DestroyImmediate(routeObject);

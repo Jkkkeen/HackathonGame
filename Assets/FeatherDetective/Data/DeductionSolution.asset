@@ -1,0 +1,25 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f464519aa75b4494fa060a9e37a9e6bb, type: 3}
+  m_Name: DeductionSolution
+  m_EditorClassIdentifier: 
+  requiredAnswers:
+  - slotId: 0
+    feather: {fileID: 11400000, guid: 3aa81112a6729dd4d961ca3fafa16585, type: 2}
+  - slotId: 1
+    feather: {fileID: 11400000, guid: 98207487cda29654dbf3c1f97a15fe42, type: 2}
+  - slotId: 2
+    feather: {fileID: 11400000, guid: 49f1676d0a07d62479e1b497f86f1f86, type: 2}
+  - slotId: 3
+    feather: {fileID: 11400000, guid: 5c4c401a2e9dec34b96071b6b944fb9e, type: 2}
+  - slotId: 4
+    feather: {fileID: 11400000, guid: c006be914773d6f47a0b98a324d8437c, type: 2}

@@ -27,26 +27,28 @@ namespace FeatherDetective
 
         public void ApplyMagpieState(Color[] importantColors)
         {
-            if (cachedRenderer == null)
+            var material = GetSharedMaterial();
+            if (material == null)
             {
                 return;
             }
 
             if (IsImportantColor(importantColors))
             {
-                cachedRenderer.material.color = originalColor;
+                material.color = originalColor;
                 return;
             }
 
             var grayscale = originalColor.grayscale;
-            cachedRenderer.material.color = new Color(grayscale, grayscale, grayscale, originalColor.a);
+            material.color = new Color(grayscale, grayscale, grayscale, originalColor.a);
         }
 
         public void Restore()
         {
-            if (cachedRenderer != null)
+            var material = GetSharedMaterial();
+            if (material != null)
             {
-                cachedRenderer.material.color = originalColor;
+                material.color = originalColor;
             }
         }
 
@@ -89,9 +91,15 @@ namespace FeatherDetective
                 return;
             }
 
+            var material = GetSharedMaterial();
+            if (material == null)
+            {
+                return;
+            }
+
             if (!hasOriginalColor || forceOriginalColor)
             {
-                originalColor = cachedRenderer.material.color;
+                originalColor = material.color;
                 hasOriginalColor = true;
             }
 
@@ -99,6 +107,16 @@ namespace FeatherDetective
             {
                 memoryColor = originalColor;
             }
+        }
+
+        private Material GetSharedMaterial()
+        {
+            if (cachedRenderer == null)
+            {
+                cachedRenderer = GetComponent<Renderer>();
+            }
+
+            return cachedRenderer != null ? cachedRenderer.sharedMaterial : null;
         }
     }
 }

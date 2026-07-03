@@ -295,7 +295,7 @@ namespace FeatherDetective
 
             var text = textObject.AddComponent<Text>();
             text.text = value;
-            text.font = Resources.GetBuiltinResource<Font>("Arial.ttf");
+            text.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
             text.fontSize = size;
             text.alignment = alignment;
             text.color = new Color(0.08f, 0.1f, 0.12f);
