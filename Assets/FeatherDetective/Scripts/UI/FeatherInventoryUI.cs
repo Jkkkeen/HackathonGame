@@ -27,7 +27,27 @@ namespace FeatherDetective
             }
 
             var selected = runtime.SelectedFeather != null ? runtime.SelectedFeather.DisplayName : "None";
-            label.text = $"Feathers {runtime.State.CollectedCount}/{totalFeathers}\nSelected: {selected}";
+            var selectedIndex = GetSelectedIndex(runtime);
+            var selectedCount = runtime.CollectedFeathers.Count;
+            label.text = $"Feathers {runtime.State.CollectedCount}/{totalFeathers}\nSelected {selectedIndex}/{selectedCount}: {selected}";
+        }
+
+        private static int GetSelectedIndex(InvestigationRuntime runtime)
+        {
+            if (runtime.SelectedFeather == null)
+            {
+                return 0;
+            }
+
+            for (var i = 0; i < runtime.CollectedFeathers.Count; i++)
+            {
+                if (runtime.CollectedFeathers[i] == runtime.SelectedFeather)
+                {
+                    return i + 1;
+                }
+            }
+
+            return 0;
         }
     }
 }

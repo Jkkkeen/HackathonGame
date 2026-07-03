@@ -40,7 +40,7 @@ namespace FeatherDetective
 
             CreatePlayer(runtimeBundle.Prompt, runtimeBundle.Runtime, perches[0], materials);
             CreateFeathers(feathers, runtimeBundle.Runtime, materials);
-            CreateNestBoard(runtimeBundle.Runtime, runtimeBundle.EndingUi, solution, sun, materials);
+            CreateNestBoard(runtimeBundle.Runtime, runtimeBundle.BoardUi, runtimeBundle.EndingUi, solution, sun, materials);
             CreateCamera();
             AssetDatabase.SaveAssets();
         }
@@ -169,7 +169,8 @@ namespace FeatherDetective
             var overlay = CreateOverlay(canvas.transform);
             var promptText = CreateText("PromptText", canvas.transform, "Inspect", new Vector2(0f, -220f), new Vector2(0.5f, 0.5f), 24, TextAnchor.MiddleCenter);
             var inventoryText = CreateText("InventoryText", canvas.transform, "Feathers 0/12", new Vector2(24f, -24f), new Vector2(0f, 1f), 20, TextAnchor.UpperLeft);
-            var boardText = CreateText("BoardText", canvas.transform, "Nest board", new Vector2(0f, -24f), new Vector2(0.5f, 1f), 20, TextAnchor.UpperCenter);
+            var boardText = CreateText("BoardText", canvas.transform, "Nest board", new Vector2(0f, -24f), new Vector2(0.5f, 1f), 16, TextAnchor.UpperCenter);
+            boardText.rectTransform.sizeDelta = new Vector2(700f, 210f);
             var endingGroup = CreateEndingGroup(canvas.transform, out var endingText);
 
             var prompt = systems.AddComponent<InteractionPrompt>();
@@ -235,7 +236,7 @@ namespace FeatherDetective
             var runtime = systems.AddComponent<InvestigationRuntime>();
             runtime.ConfigureForBuilder(playback, inventory);
 
-            return new RuntimeBundle(runtime, prompt, endingUi);
+            return new RuntimeBundle(runtime, prompt, boardUi, endingUi);
         }
 
         private static Canvas CreateCanvas()
@@ -444,13 +445,14 @@ namespace FeatherDetective
 
         private static void CreateNestBoard(
             InvestigationRuntime runtime,
+            DeductionBoardUI boardUi,
             EndingMessageUI endingUi,
             DeductionSolution solution,
             Light sun,
             Material[] materials)
         {
             var boardObject = AddPrimitive("NestBoard", PrimitiveType.Cube, new Vector3(0f, 0.75f, -5.5f), new Vector3(2.8f, 0.2f, 1.6f), materials[2]);
-            boardObject.GetComponent<Collider>().isTrigger = true;
+            boardObject.GetComponent<Collider>().isTrigger = false;
 
             var slotIds = new[]
             {
@@ -481,8 +483,14 @@ namespace FeatherDetective
             var ending = endingObject.AddComponent<EndingController>();
             ending.ConfigureForBuilder(endingUi, sun);
 
-            var board = boardObject.AddComponent<DeductionBoard>();
-            board.ConfigureForBuilder(runtime, solution, ending, slots);
+            var interactionObject = new GameObject("NestBoardInteraction");
+            interactionObject.transform.position = new Vector3(0f, 1f, -5.5f);
+            var interactionCollider = interactionObject.AddComponent<BoxCollider>();
+            interactionCollider.isTrigger = true;
+            interactionCollider.size = new Vector3(4.2f, 1.8f, 3.2f);
+
+            var board = interactionObject.AddComponent<DeductionBoard>();
+            board.ConfigureForBuilder(runtime, solution, ending, slots, boardUi);
         }
 
         private static void CreateCamera()
@@ -545,15 +553,17 @@ namespace FeatherDetective
 
         private struct RuntimeBundle
         {
-            public RuntimeBundle(InvestigationRuntime runtime, InteractionPrompt prompt, EndingMessageUI endingUi)
+            public RuntimeBundle(InvestigationRuntime runtime, InteractionPrompt prompt, DeductionBoardUI boardUi, EndingMessageUI endingUi)
             {
                 Runtime = runtime;
                 Prompt = prompt;
+                BoardUi = boardUi;
                 EndingUi = endingUi;
             }
 
             public InvestigationRuntime Runtime { get; }
             public InteractionPrompt Prompt { get; }
+            public DeductionBoardUI BoardUi { get; }
             public EndingMessageUI EndingUi { get; }
         }
     }

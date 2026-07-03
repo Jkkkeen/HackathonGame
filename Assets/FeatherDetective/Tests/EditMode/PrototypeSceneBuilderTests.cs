@@ -22,6 +22,22 @@ namespace FeatherDetective.Tests
                 var board = Object.FindObjectOfType<DeductionBoard>();
                 Assert.That(board, Is.Not.Null);
 
+                var boardInteraction = GameObject.Find("NestBoardInteraction");
+                Assert.That(boardInteraction, Is.Not.Null);
+                var boardCollider = boardInteraction.GetComponent<BoxCollider>();
+                Assert.That(boardCollider, Is.Not.Null);
+                Assert.That(boardCollider.isTrigger, Is.True);
+                Assert.That(boardCollider.size.x, Is.GreaterThanOrEqualTo(4f));
+                Assert.That(boardCollider.size.y, Is.GreaterThanOrEqualTo(1.5f));
+                Assert.That(boardCollider.size.z, Is.GreaterThanOrEqualTo(3f));
+
+                var player = Object.FindObjectOfType<BirdPlayerController>();
+                var serializedPlayer = new SerializedObject(player);
+                Assert.That(serializedPlayer.FindProperty("hopSpeed").floatValue, Is.GreaterThanOrEqualTo(6f));
+                var groundedGrace = serializedPlayer.FindProperty("groundedGraceDuration");
+                Assert.That(groundedGrace, Is.Not.Null);
+                Assert.That(groundedGrace.floatValue, Is.GreaterThanOrEqualTo(0.1f));
+
                 var serializedBoard = new SerializedObject(board);
                 var solution = serializedBoard.FindProperty("solution").objectReferenceValue as DeductionSolution;
                 Assert.That(solution, Is.Not.Null);

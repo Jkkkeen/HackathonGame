@@ -7,9 +7,10 @@ namespace FeatherDetective
         [SerializeField] private InvestigationRuntime runtime;
         [SerializeField] private DeductionSolution solution;
         [SerializeField] private EndingController endingController;
+        [SerializeField] private DeductionBoardUI boardUI;
         [SerializeField] private DeductionSlot[] slots = new DeductionSlot[0];
 
-        public string PromptText => "Place";
+        public string PromptText => "Place feather";
 
         public void ConfigureForBuilder(
             InvestigationRuntime newRuntime,
@@ -23,22 +24,42 @@ namespace FeatherDetective
             slots = newSlots ?? new DeductionSlot[0];
         }
 
+        public void ConfigureForBuilder(
+            InvestigationRuntime newRuntime,
+            DeductionSolution newSolution,
+            EndingController newEndingController,
+            DeductionSlot[] newSlots,
+            DeductionBoardUI newBoardUI)
+        {
+            ConfigureForBuilder(newRuntime, newSolution, newEndingController, newSlots);
+            boardUI = newBoardUI;
+        }
+
         public void Inspect()
         {
-            if (runtime == null || runtime.SelectedFeather == null || slots == null)
+            if (runtime == null || slots == null)
             {
+                return;
+            }
+
+            var selected = runtime.SelectedFeather;
+            if (selected == null)
+            {
+                boardUI?.ShowNoSelectedFeather(runtime);
                 return;
             }
 
             for (var i = 0; i < slots.Length; i++)
             {
                 var slot = slots[i];
-                if (slot != null && runtime.SelectedFeather.CanPlaceInSlot(slot.SlotId))
+                if (slot != null && selected.CanPlaceInSlot(slot.SlotId))
                 {
                     Place(slot.SlotId);
                     return;
                 }
             }
+
+            boardUI?.ShowCannotPlace(runtime, selected);
         }
 
         public bool Place(DeductionSlotId slotId)
@@ -48,13 +69,28 @@ namespace FeatherDetective
                 return false;
             }
 
+            var selected = runtime.SelectedFeather;
+            if (selected == null)
+            {
+                boardUI?.ShowNoSelectedFeather(runtime);
+                return false;
+            }
+
             var placed = runtime.TryPlaceSelected(slotId);
+            if (!placed)
+            {
+                boardUI?.ShowCannotPlace(runtime, selected);
+                return false;
+            }
+
+            boardUI?.ShowPlaced(runtime, slotId, selected);
             if (placed && runtime.State.IsSolved(solution) && endingController != null)
             {
+                boardUI?.ShowSolved(runtime);
                 endingController.PlayEnding();
             }
 
-            return placed;
+            return true;
         }
     }
 }

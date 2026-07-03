@@ -47,6 +47,80 @@ namespace FeatherDetective.Tests
         }
 
         [Test]
+        public void InspectUpdatesBoardUiWhenSelectedFeatherIsPlaced()
+        {
+            var feather = CreateFeather("pigeon-edge", BirdSpecies.Pigeon, DeductionSlotId.WhatEvidenceMeans);
+            var runtimeObject = new GameObject("Investigation Runtime");
+            var boardObject = new GameObject("Deduction Board");
+            var endingObject = new GameObject("Ending Controller");
+            var slotObject = new GameObject("Deduction Slot");
+            var uiObject = new GameObject("Deduction Board UI");
+            var labelObject = new GameObject("Board Label", typeof(RectTransform), typeof(CanvasRenderer), typeof(UnityEngine.UI.Text));
+
+            try
+            {
+                var runtime = runtimeObject.AddComponent<InvestigationRuntime>();
+                var board = boardObject.AddComponent<DeductionBoard>();
+                var ending = endingObject.AddComponent<EndingController>();
+                var slot = slotObject.AddComponent<DeductionSlot>();
+                var boardUi = uiObject.AddComponent<DeductionBoardUI>();
+                var label = labelObject.GetComponent<UnityEngine.UI.Text>();
+                label.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+
+                slot.ConfigureForBuilder(DeductionSlotId.WhatEvidenceMeans);
+                boardUi.ConfigureForBuilder(label);
+                board.ConfigureForBuilder(runtime, null, ending, new[] { slot }, boardUi);
+
+                runtime.CollectFeather(feather);
+                board.Inspect();
+
+                Assert.That(label.text, Does.Contain("What evidence means"));
+                Assert.That(label.text, Does.Contain("pigeon-edge"));
+            }
+            finally
+            {
+                Object.DestroyImmediate(runtimeObject);
+                Object.DestroyImmediate(boardObject);
+                Object.DestroyImmediate(endingObject);
+                Object.DestroyImmediate(slotObject);
+                Object.DestroyImmediate(uiObject);
+                Object.DestroyImmediate(labelObject);
+            }
+        }
+
+        [Test]
+        public void InspectShowsBoardUiMessageWhenNoFeatherIsSelected()
+        {
+            var runtimeObject = new GameObject("Investigation Runtime");
+            var boardObject = new GameObject("Deduction Board");
+            var uiObject = new GameObject("Deduction Board UI");
+            var labelObject = new GameObject("Board Label", typeof(RectTransform), typeof(CanvasRenderer), typeof(UnityEngine.UI.Text));
+
+            try
+            {
+                var runtime = runtimeObject.AddComponent<InvestigationRuntime>();
+                var board = boardObject.AddComponent<DeductionBoard>();
+                var boardUi = uiObject.AddComponent<DeductionBoardUI>();
+                var label = labelObject.GetComponent<UnityEngine.UI.Text>();
+                label.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+
+                boardUi.ConfigureForBuilder(label);
+                board.ConfigureForBuilder(runtime, null, null, new DeductionSlot[0], boardUi);
+
+                board.Inspect();
+
+                Assert.That(label.text, Does.Contain("No feather selected"));
+            }
+            finally
+            {
+                Object.DestroyImmediate(runtimeObject);
+                Object.DestroyImmediate(boardObject);
+                Object.DestroyImmediate(uiObject);
+                Object.DestroyImmediate(labelObject);
+            }
+        }
+
+        [Test]
         public void RuntimeCollectsFeatherOnlyOnceAndCyclesSelection()
         {
             var crow = CreateFeather("crow-bench", BirdSpecies.Crow, DeductionSlotId.LastFeedingDay);
@@ -97,7 +171,7 @@ namespace FeatherDetective.Tests
                 Assert.That(runtime.CollectFeather(crow), Is.True);
                 Assert.That(runtime.SelectedFeather, Is.EqualTo(crow));
                 Assert.That(runtime.CollectedFeathers, Has.Count.EqualTo(1));
-                Assert.That(label.text, Is.EqualTo("Feathers 1/12\nSelected: crow-bench"));
+                Assert.That(label.text, Is.EqualTo("Feathers 1/12\nSelected 1/1: crow-bench"));
 
                 label.text = "sentinel";
 

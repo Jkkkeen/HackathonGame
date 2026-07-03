@@ -7,10 +7,11 @@ namespace FeatherDetective
     public sealed class BirdPlayerController : MonoBehaviour
     {
         [SerializeField] private float walkSpeed = 3.5f;
-        [SerializeField] private float hopSpeed = 4.8f;
+        [SerializeField] private float hopSpeed = 6.4f;
         [SerializeField] private float gravity = -14f;
         [SerializeField] private float glideDuration = 0.8f;
         [SerializeField] private float glideRange = 7f;
+        [SerializeField] private float groundedGraceDuration = 0.16f;
         [SerializeField] private Transform visualRoot;
         [SerializeField] private InteractionPrompt prompt;
         [SerializeField] private InvestigationRuntime runtime;
@@ -20,6 +21,7 @@ namespace FeatherDetective
         private PerchNode currentPerch;
         private IInspectable focusedInspectable;
         private bool gliding;
+        private float groundedGraceTimer;
 
         public void ConfigureForBuilder(InteractionPrompt newPrompt, PerchNode startPerch)
         {
@@ -68,14 +70,25 @@ namespace FeatherDetective
                 transform.rotation = Quaternion.LookRotation(input, Vector3.up);
             }
 
-            if (controller.isGrounded && velocity.y < 0f)
+            var canTreatAsGrounded = controller.isGrounded || currentPerch != null;
+            if (canTreatAsGrounded)
+            {
+                groundedGraceTimer = groundedGraceDuration;
+            }
+            else
+            {
+                groundedGraceTimer -= Time.deltaTime;
+            }
+
+            if (canTreatAsGrounded && velocity.y < 0f)
             {
                 velocity.y = -1f;
             }
 
-            if (controller.isGrounded && Input.GetKeyDown(KeyCode.Space))
+            if (groundedGraceTimer > 0f && Input.GetKeyDown(KeyCode.Space))
             {
                 velocity.y = hopSpeed;
+                groundedGraceTimer = 0f;
             }
 
             velocity.y += gravity * Time.deltaTime;

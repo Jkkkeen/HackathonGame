@@ -36,7 +36,7 @@ namespace FeatherDetective.Tests
                 runtime.CollectFeather(feather);
                 ui.Refresh(runtime);
 
-                Assert.That(label.text, Is.EqualTo("Feathers 1/24\nSelected: Crow Feather"));
+                Assert.That(label.text, Is.EqualTo("Feathers 1/24\nSelected 1/1: Crow Feather"));
             }
             finally
             {
