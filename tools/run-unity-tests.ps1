@@ -19,9 +19,12 @@ $resultsDir = Join-Path $repoRoot "TestResults"
 New-Item -ItemType Directory -Force -Path $resultsDir | Out-Null
 
 $resultFile = Join-Path $resultsDir ("{0}.xml" -f ($(if ($TestPlatform -eq "editmode") { "EditMode" } else { "PlayMode" })))
+Remove-Item -LiteralPath $resultFile -Force -ErrorAction SilentlyContinue
+
 $logsDir = Join-Path $repoRoot "Logs"
 New-Item -ItemType Directory -Force -Path $logsDir | Out-Null
 $logFile = Join-Path $logsDir ("{0}.log" -f ($(if ($TestPlatform -eq "editmode") { "EditMode" } else { "PlayMode" })))
+Remove-Item -LiteralPath $logFile -Force -ErrorAction SilentlyContinue
 
 $arguments = @(
     "-batchmode",

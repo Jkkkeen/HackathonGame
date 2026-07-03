@@ -53,5 +53,39 @@ namespace FeatherDetective.Tests
                 EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
             }
         }
+
+        [Test]
+        public void BuildSceneUsesShadersCompatibleWithActiveRenderPipeline()
+        {
+            try
+            {
+                PrototypeSceneBuilder.BuildInOpenSceneForTests();
+
+                foreach (var sceneRenderer in Object.FindObjectsOfType<Renderer>())
+                {
+                    foreach (var material in sceneRenderer.sharedMaterials)
+                    {
+                        if (material == null || material.shader == null)
+                        {
+                            continue;
+                        }
+
+                        Assert.That(
+                            material.shader.name,
+                            Is.Not.EqualTo("Hidden/InternalErrorShader"),
+                            $"{sceneRenderer.name} uses Unity's internal error shader.");
+
+                        Assert.That(
+                            material.shader.name,
+                            Does.Not.StartWith("Universal Render Pipeline/"),
+                            $"{sceneRenderer.name} uses {material.shader.name}, which renders magenta when the project is not running URP.");
+                    }
+                }
+            }
+            finally
+            {
+                EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+            }
+        }
     }
 }

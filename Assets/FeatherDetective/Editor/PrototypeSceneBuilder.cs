@@ -62,8 +62,8 @@ namespace FeatherDetective
 
         private static Material CreateMaterial(string name, Color color)
         {
-            var shader = Shader.Find("Universal Render Pipeline/Lit")
-                ?? Shader.Find("Standard")
+            var shader = Shader.Find("Standard")
+                ?? Shader.Find("Universal Render Pipeline/Lit")
                 ?? Shader.Find("Sprites/Default");
             var material = new Material(shader)
             {
