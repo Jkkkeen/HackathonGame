@@ -70,10 +70,33 @@ namespace FeatherDetective.Tests
             Assert.That(state.IsSolved(solution), Is.True);
         }
 
+        [Test]
+        public void IsSolvedRejectsAtmosphereFeatherPlacedIntoMainMysterySlot()
+        {
+            var required = CreateFeather("pigeon-edge", BirdSpecies.Pigeon, DeductionSlotId.WhatEvidenceMeans);
+            var atmosphere = CreateFeather("sparrow-mood", BirdSpecies.Sparrow, DeductionSlotId.WhatEvidenceMeans, ClueRole.Atmosphere);
+            var solution = ScriptableObject.CreateInstance<DeductionSolution>();
+            solution.ConfigureForTests(new[]
+            {
+                new DeductionAnswer(DeductionSlotId.WhatEvidenceMeans, required)
+            });
+
+            var state = new InvestigationState();
+            state.Collect(atmosphere);
+            state.TryPlace(atmosphere, DeductionSlotId.WhatEvidenceMeans);
+
+            Assert.That(state.IsSolved(solution), Is.False);
+        }
+
         private static FeatherDefinition CreateFeather(string id, BirdSpecies species, DeductionSlotId slot)
         {
+            return CreateFeather(id, species, slot, ClueRole.MainMystery);
+        }
+
+        private static FeatherDefinition CreateFeather(string id, BirdSpecies species, DeductionSlotId slot, ClueRole role)
+        {
             var feather = ScriptableObject.CreateInstance<FeatherDefinition>();
-            feather.ConfigureForTests(id, id, species, ClueRole.MainMystery, new[] { slot }, new Color[0], new Vector3[0], id);
+            feather.ConfigureForTests(id, id, species, role, new[] { slot }, new Color[0], new Vector3[0], id);
             return feather;
         }
     }
