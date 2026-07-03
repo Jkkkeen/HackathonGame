@@ -13,6 +13,7 @@ namespace FeatherDetective
         [SerializeField] private float glideRange = 7f;
         [SerializeField] private Transform visualRoot;
         [SerializeField] private InteractionPrompt prompt;
+        [SerializeField] private InvestigationRuntime runtime;
 
         private CharacterController controller;
         private Vector3 velocity;
@@ -28,6 +29,17 @@ namespace FeatherDetective
             {
                 transform.position = startPerch.LandingPosition;
             }
+        }
+
+        public void ConfigureForBuilder(InteractionPrompt newPrompt, PerchNode startPerch, InvestigationRuntime newRuntime)
+        {
+            runtime = newRuntime;
+            ConfigureForBuilder(newPrompt, startPerch);
+        }
+
+        public void SelectNextCollectedFeather()
+        {
+            runtime?.SelectNextCollectedFeather();
         }
 
         private void Awake()
@@ -72,6 +84,11 @@ namespace FeatherDetective
             if (Input.GetKeyDown(KeyCode.E) && focusedInspectable != null)
             {
                 focusedInspectable.Inspect();
+            }
+
+            if (Input.GetKeyDown(KeyCode.Tab))
+            {
+                SelectNextCollectedFeather();
             }
 
             if (Input.GetKeyDown(KeyCode.G))

@@ -38,7 +38,7 @@ namespace FeatherDetective
             var runtimeBundle = CreateRuntime(materials, colorTargets);
             var perches = CreatePerches();
 
-            CreatePlayer(runtimeBundle.Prompt, perches[0], materials);
+            CreatePlayer(runtimeBundle.Prompt, runtimeBundle.Runtime, perches[0], materials);
             CreateFeathers(feathers, runtimeBundle.Runtime, materials);
             CreateNestBoard(runtimeBundle.Runtime, runtimeBundle.EndingUi, solution, sun, materials);
             CreateCamera();
@@ -386,7 +386,7 @@ namespace FeatherDetective
             return perchObject.AddComponent<PerchNode>();
         }
 
-        private static void CreatePlayer(InteractionPrompt prompt, PerchNode startPerch, Material[] materials)
+        private static void CreatePlayer(InteractionPrompt prompt, InvestigationRuntime runtime, PerchNode startPerch, Material[] materials)
         {
             var player = new GameObject("PlayerBird");
             var characterController = player.AddComponent<CharacterController>();
@@ -399,7 +399,7 @@ namespace FeatherDetective
             body.transform.localPosition = new Vector3(0f, 0.35f, 0f);
 
             var controller = player.AddComponent<BirdPlayerController>();
-            controller.ConfigureForBuilder(prompt, startPerch);
+            controller.ConfigureForBuilder(prompt, startPerch, runtime);
         }
 
         private static void CreateFeathers(FeatherDefinition[] feathers, InvestigationRuntime runtime, Material[] materials)

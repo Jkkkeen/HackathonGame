@@ -80,11 +80,46 @@ namespace FeatherDetective.Tests
             Assert.That(parameters[1], Is.SameAs(expected));
         }
 
+        [Test]
+        public void BirdPlayerControllerCyclesSelectedCollectedFeatherThroughRuntime()
+        {
+            var playerObject = CreateGameObject("player");
+            var runtimeObject = CreateGameObject("runtime");
+            playerObject.AddComponent<CharacterController>();
+            var controller = playerObject.AddComponent<BirdPlayerController>();
+            var runtime = runtimeObject.AddComponent<InvestigationRuntime>();
+            var crow = CreateFeather("crow-bench", BirdSpecies.Crow, DeductionSlotId.LastFeedingDay);
+            var pigeon = CreateFeather("pigeon-edge", BirdSpecies.Pigeon, DeductionSlotId.WhatEvidenceMeans);
+
+            try
+            {
+                runtime.CollectFeather(crow);
+                runtime.CollectFeather(pigeon);
+                controller.ConfigureForBuilder(null, null, runtime);
+
+                controller.SelectNextCollectedFeather();
+
+                Assert.That(runtime.SelectedFeather, Is.EqualTo(crow));
+            }
+            finally
+            {
+                Object.DestroyImmediate(crow);
+                Object.DestroyImmediate(pigeon);
+            }
+        }
+
         private GameObject CreateGameObject(string name)
         {
             var gameObject = new GameObject(name);
             createdObjects.Add(gameObject);
             return gameObject;
+        }
+
+        private static FeatherDefinition CreateFeather(string id, BirdSpecies species, DeductionSlotId slot)
+        {
+            var feather = ScriptableObject.CreateInstance<FeatherDefinition>();
+            feather.ConfigureForTests(id, id, species, ClueRole.MainMystery, new[] { slot }, new Color[0], new Vector3[0], id);
+            return feather;
         }
 
         private sealed class InspectableStub : MonoBehaviour, IInspectable

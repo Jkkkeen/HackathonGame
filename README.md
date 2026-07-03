@@ -22,6 +22,7 @@ Open:
 - Space: hop
 - G: glide to a linked perch
 - E: inspect a feather or place a selected feather at the nest board
+- Tab: cycle the selected collected feather
 
 ## Tests
 
