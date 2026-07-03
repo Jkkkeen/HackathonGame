@@ -5,11 +5,23 @@ if ($env:UNITY_EDITOR) {
     $candidates += $env:UNITY_EDITOR
 }
 
-$hubRoot = "C:\Program Files\Unity\Hub\Editor"
-if (Test-Path $hubRoot) {
-    $candidates += Get-ChildItem -Path $hubRoot -Directory |
-        Sort-Object Name -Descending |
-        ForEach-Object { Join-Path $_.FullName "Editor\Unity.exe" }
+$searchRoots = @()
+if ($env:UNITY_EDITOR_SEARCH_ROOTS) {
+    $searchRoots += $env:UNITY_EDITOR_SEARCH_ROOTS -split [IO.Path]::PathSeparator
+}
+
+$searchRoots += @(
+    "E:\Unity\Editors",
+    "E:\Unity\Hub\Editor",
+    "C:\Program Files\Unity\Hub\Editor"
+)
+
+foreach ($hubRoot in $searchRoots) {
+    if ($hubRoot -and (Test-Path $hubRoot)) {
+        $candidates += Get-ChildItem -Path $hubRoot -Directory |
+            Sort-Object Name -Descending |
+            ForEach-Object { Join-Path $_.FullName "Editor\Unity.exe" }
+    }
 }
 
 $pathUnity = Get-Command Unity -ErrorAction SilentlyContinue
